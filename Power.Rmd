@@ -1,0 +1,25 @@
+---
+title: "Power calculations"
+author: "Paul V"
+date: "26/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries and working directory
+```{r, echo = FALSE, results='hide', warning=FALSE, message = FALSE}
+library(tidyverse)
+library(pwr)
+
+
+## PAUL SETTINGS
+setwd("E:/R stuff/TMS_placement")
+
+```
+
+## Power calculations
+```{r}
+
