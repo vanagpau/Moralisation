@@ -23,3 +23,62 @@ setwd("E:/R stuff/TMS_placement")
 ## Power calculations
 ```{r}
 
+#Stage 1
+
+#Study 2
+beta1 <- -.03 #existing moralisers
+n1 <- 40
+beta2 <- .57 #moralisers
+n2 <- 48
+beta3 <- -.04 #unchanged
+n3 <- 47
+
+#calculate weighted average of beta coefficients
+r <- weighted.mean(c(beta1, beta2, beta3), c(n1, n2, n3))
+
+# f2 formula is:
+R2 = r^2 
+f2 = R2/(1 - R2)
+
+# Calculate sample size
+np = 1 #number of parameters in model
+pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
+
+np = 3 #number of parameters in model
+pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
+
+np = 5 #number of parameters in model
+pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
+
+#Study 3
+beta1 <- -.05 #decreasers
+n1 <- 136
+beta2 <- 57 #moralisers
+n2 <- .41
+beta3 <- .05 #unchanged
+n3 <- 46
+
+#calculate weighted average of beta coefficients
+r <- weighted.mean(c(beta1, beta2, beta3), c(n1, n2, n3))
+
+# f2 formula is:
+R2 = r^2 
+f2 = R2/(1 - R2)
+
+# Calculate sample size
+np = 1 #number of parameters in model
+pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
+
+np = 3 #number of parameters in model
+pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
+
+np = 5 #number of parameters in model
+pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
+
+# Plot 
+
+
+
+
+
+```
