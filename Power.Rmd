@@ -54,7 +54,7 @@ pwr.f2.test(u = np, f2 = f2, sig.level = 0.05, power = 0.8)
 beta1 <- -.05 #decreasers
 n1 <- 136
 beta2 <- 57 #moralisers
-n2 <- .41
+n2 <- 41
 beta3 <- .05 #unchanged
 n3 <- 46
 
