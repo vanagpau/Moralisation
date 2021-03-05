@@ -1,5 +1,5 @@
 ---
-title: "Sample data"
+title: "Sample Moralisation pilot data"
 author: "Paul V"
 date: "05/03/2021"
 output: html_document
@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 
 
-
 ## PAUL SETTINGS
 setwd("E:/R stuff/Moralisation")
 
@@ -25,15 +24,6 @@ setwd("E:/R stuff/Moralisation")
 #create dataframe
 # number of participants
 n <- 30
-# set mean values per trial pre and post
-# m1_pre <- rnorm(1, 0, 2)
-# m2_pre <- rnorm(1, 0, 2)
-# m3_pre <- rnorm(1, 0, 2)
-# m4_pre <- rnorm(1, 0, 2)
-# m1_post <- m1_pre*1.2
-# m2_post <- m2_pre*1.4
-# m3_post <- m3_pre*1.0
-# m4_post <- m4_pre*1.8
 
 # set covariate values of familiarity
 f1 <- rnorm(1, 0, 2)
@@ -41,24 +31,28 @@ f2 <- rnorm(1, 0, 2)
 f3 <- rnorm(1, 0, 2)
 f4 <- rnorm(1, 0, 2)
 
-df <- data.frame('PID' = sort(rep(1:n, 4)), 'trial' = rep(1:4, 30), 'pre_post' = c(rep('pre',60), rep('post',60)))
+df <- data.frame('PID' = sort(rep(1:n, 4)), 'trial' = rep(c('Cars', 'Meat', 'Plastic', 'e-waste'), n), 'pre_post' = c(rep('pre',n*2), rep('post',n*2)))
 
-df$moral_score <- rnorm(120, 0, 2)
-                                                                                   
-
+df$moral_score <- rnorm(n*4, 0, 2)
+df$trial <- factor(df$trial)                                                                                   
+df$pre_post <- ordered(df$pre_post, levels = c("pre", "post"))
 
 ```
 ##Descriptive Statistics and Plots
 ```{r}
-df %>% group_by(trial)
+df %>% group_by(trial, pre_post) %>% summarise(mean = mean(moral_score))
 
+df %>% ggplot(aes(x=pre_post, y=moral_score, fill=trial))  + facet_wrap(df$trial) + geom_boxplot() + ggtitle("Comparison of Moralisation score for each issue before and after video stimulus") + ylab("Moral Score") + xlab("")
 
 ```
 
-## Stats
+## Example Stats
 ```{r}
-a1 <- aov(q1_post ~ q1_pre, data = df)
-summary(a1)
+
+#Simple paired t-test
+x <- df %>% filter(trial == 'Cars', pre_post == 'pre') %>% select(moral_score)
+y <- df %>% filter(trial == 'Cars', pre_post == 'post') %>% select(moral_score)
+t.test(x[,1], y[,1], paired = TRUE, alternative = "two.sided")
 
 
 ```
