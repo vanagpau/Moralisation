@@ -1,0 +1,64 @@
+---
+title: "Sample data"
+author: "Paul V"
+date: "05/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries and working directory
+```{r, echo = FALSE, results='hide', warning=FALSE, message = FALSE}
+library(tidyverse)
+
+
+
+## PAUL SETTINGS
+setwd("E:/R stuff/Moralisation")
+
+```
+
+## Generate sample data for pilot
+```{r}
+#create dataframe
+# number of participants
+n <- 30
+# set mean values per trial pre and post
+# m1_pre <- rnorm(1, 0, 2)
+# m2_pre <- rnorm(1, 0, 2)
+# m3_pre <- rnorm(1, 0, 2)
+# m4_pre <- rnorm(1, 0, 2)
+# m1_post <- m1_pre*1.2
+# m2_post <- m2_pre*1.4
+# m3_post <- m3_pre*1.0
+# m4_post <- m4_pre*1.8
+
+# set covariate values of familiarity
+f1 <- rnorm(1, 0, 2)
+f2 <- rnorm(1, 0, 2)
+f3 <- rnorm(1, 0, 2)
+f4 <- rnorm(1, 0, 2)
+
+df <- data.frame('PID' = sort(rep(1:n, 4)), 'trial' = rep(1:4, 30), 'pre_post' = c(rep('pre',60), rep('post',60)))
+
+df$moral_score <- rnorm(120, 0, 2)
+                                                                                   
+
+
+```
+##Descriptive Statistics and Plots
+```{r}
+df %>% group_by(trial)
+
+
+```
+
+## Stats
+```{r}
+a1 <- aov(q1_post ~ q1_pre, data = df)
+summary(a1)
+
+
+```
