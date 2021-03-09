@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Libraries and working directory
 ```{r, echo = FALSE, results='hide', warning=FALSE, message = FALSE}
 library(tidyverse)
+library(xtable)
 
 
 ## PAUL SETTINGS
@@ -41,6 +42,8 @@ df$pre_post <- ordered(df$pre_post, levels = c("pre", "post"))
 ##Descriptive Statistics and Plots
 ```{r}
 df %>% group_by(trial, pre_post) %>% summarise(mean = mean(moral_score))
+
+print(xtable(df %>% group_by(trial, pre_post) %>% summarise(mean = mean(moral_score))), type="html", file="example.html")
 
 df %>% ggplot(aes(x=pre_post, y=moral_score, fill=trial))  + facet_wrap(df$trial) + geom_boxplot() + ggtitle("Comparison of Moralisation score for each issue before and after video stimulus") + ylab("Moral Score") + xlab("")
 
