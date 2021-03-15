@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, echo = FALSE, results='hide', warning=FALSE, message = FALSE}
 library(tidyverse)
 library(xtable)
-
+library(rstatix)
 
 ## PAUL SETTINGS
 setwd("E:/R stuff/Moralisation")
@@ -37,6 +37,7 @@ df <- data.frame('PID' = sort(rep(1:n, 4)), 'trial' = rep(c('Cars', 'Meat', 'Pla
 df$moral_score <- rnorm(n*4, 0, 2)
 df$trial <- factor(df$trial)                                                                                   
 df$pre_post <- ordered(df$pre_post, levels = c("pre", "post"))
+df$PID <- factor(df$PID)
 
 ```
 ##Descriptive Statistics and Plots
@@ -56,6 +57,5 @@ df %>% ggplot(aes(x=pre_post, y=moral_score, fill=trial))  + facet_wrap(df$trial
 x <- df %>% filter(trial == 'Cars', pre_post == 'pre') %>% select(moral_score)
 y <- df %>% filter(trial == 'Cars', pre_post == 'post') %>% select(moral_score)
 t.test(x[,1], y[,1], paired = TRUE, alternative = "two.sided")
-
 
 ```
