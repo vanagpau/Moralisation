@@ -26,6 +26,13 @@ setwd("E:/R stuff/TMS_placement")
 #Stage 1
 
 #Study 2
+
+# simple correlation
+pwr.r.test(r = .3, sig.level = 0.05, power = .8,alternative = "two.sided")
+
+
+
+# previous calculations
 beta1 <- -.03 #existing moralisers
 n1 <- 40
 beta2 <- .57 #moralisers
