@@ -1,0 +1,74 @@
+---
+title: "Pilot analysis"
+author: "28819459"
+date: "01/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries and working directory
+```{r, results='hide', warning=FALSE, message = FALSE}
+
+library(psych)
+library(ggridges)
+library(kableExtra)
+library(tidyverse)
+
+#Set working directory
+setwd("E:/R stuff/Moralisation") #for home PC
+#setwd("/home/vanagpau/R/Moralisation") #for laptop
+
+```
+
+## Data import and wrangling
+```{r, warning=FALSE, message = FALSE}
+
+# Read in data frames
+df1 <- read_csv("data-questionnaire-j12y.csv")
+df2 <- read_csv("data-task-4xn8.csv")
+
+#Convert event indices to numeric
+df1$Event.Index <- as.numeric(df1$`Event Index`)
+
+# Create data-frame for post task questionnaire (j12y)
+df1 <- df1 %>% filter(`Event Index` > 1 & `Event Index` < 9 & `Participant Status` == "complete") %>%
+  select(c(`Event Index`, `Participant Private ID`, `Question Key`, `Response`))
+
+# Convert variables to factors
+df1$`Question Key` <- gsub("emotion ranking-", "Emotion Rank ", df1$`Question Key`)
+df1$`Question Key` <- as.factor(df1$`Question Key`)
+df1$Response <- as.factor(df1$Response)
+
+# Extract comments for most emotional video
+tibble(df1$Response[df1$`Event Index` == 4], df1$Response[df1$`Event Index` == 8]) %>%
+  kbl() %>% kable_styling(bootstrap_options = "striped")
+
+# Plot: Ridge histogram of ranking
+df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>% 
+  ggplot( aes(y=Response, x=`Question Key`,  fill=Response)) +
+    geom_density_ridges(alpha=0.6, stat="binline", bins=8, scale = 0.7) +
+    theme_ridges() +
+    theme(legend.position="none",
+      strip.text.x = element_text(size = 8)
+       )  + theme(axis.text.x = element_text(angle = 30)) +
+    xlab("") +
+    ylab("")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
