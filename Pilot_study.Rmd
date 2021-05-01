@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(psych)
 library(ggridges)
 library(kableExtra)
+library(mgsub)
 library(tidyverse)
 
 #Set working directory
@@ -30,6 +31,8 @@ setwd("E:/R stuff/Moralisation") #for home PC
 df1 <- read_csv("data-questionnaire-j12y.csv")
 df2 <- read_csv("data-task-4xn8.csv")
 
+# DATAFRAME 1
+
 #Convert event indices to numeric
 df1$Event.Index <- as.numeric(df1$`Event Index`)
 
@@ -42,11 +45,32 @@ df1$`Question Key` <- gsub("emotion ranking-", "Emotion Rank ", df1$`Question Ke
 df1$`Question Key` <- as.factor(df1$`Question Key`)
 df1$Response <- as.factor(df1$Response)
 
+# DATAFRAME 2
+
+# Set up variable types and replace with meaningful names
+df2 <- read_csv("data-task-4xn8.csv")
+df2$Response <- as.numeric(df2$Response)
+df2$`Spreadsheet Row` <- as.character(df2$`Spreadsheet Row`)
+df2$`Spreadsheet Row` <- mgsub(df2$`Spreadsheet Row`, c("1","2","3","4"), c("Meat", "Self-driving cars", "Plastic", "E-waste"))
+df2$`Screen Name` <- gsub("questionnaire", "", df2$`Screen Name`)
+df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
+
+# Create data-frame for video moralisation task (4xn8)
+df2 <- df2 %>% 
+  filter(`Participant Status` == "complete" & is.na(Response) == FALSE ) %>%
+  select(c(`Event Index`, `Participant Private ID`, `Spreadsheet Row`, `Screen Number`, `Screen Name`, `Zone Name`, Response))
+
+df2 <- pivot_wider(df2, id_cols = `Participant Private ID`, names_from = c(`Spreadsheet Row`, `Screen Name`, `Zone Name`), values_from = Response)
+
+```
+
+## Data analysis
+```{r, warning=FALSE, message = FALSE}
 # Extract comments for most emotional video
 tibble(df1$Response[df1$`Event Index` == 4], df1$Response[df1$`Event Index` == 8]) %>%
   kbl() %>% kable_styling(bootstrap_options = "striped")
 
-# Plot: Ridge histogram of ranking
+# Plot: Ridge histogram of emotion ranking
 df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>% 
   ggplot( aes(y=Response, x=`Question Key`,  fill=Response)) +
     geom_density_ridges(alpha=0.6, stat="binline", bins=8, scale = 0.7) +
