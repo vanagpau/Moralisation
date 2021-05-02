@@ -54,6 +54,8 @@ df2$`Spreadsheet Row` <- as.character(df2$`Spreadsheet Row`)
 df2$`Spreadsheet Row` <- mgsub(df2$`Spreadsheet Row`, c("1","2","3","4"), c("Meat", "Self-driving cars", "Plastic", "E-waste"))
 df2$`Screen Name` <- gsub("questionnaire", "", df2$`Screen Name`)
 df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
+colnames(df2)[1] <- "PID"
+
 
 # Create data-frame for video moralisation task (4xn8)
 df2 <- df2 %>% 
@@ -80,6 +82,40 @@ df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>%
        )  + theme(axis.text.x = element_text(angle = 30)) +
     xlab("") +
     ylab("")
+
+# Create groupings of pre and post scores per issue
+
+meat_pre <- c(df2$`Meat_Pre-stim _core_belief`, df2$`Meat_Pre-stim _right_wrong`, df2$`Meat_Pre-stim _moral_issue`, df2$`Meat_Pre-stim _just_know`)
+meat_post <- c(df2$`Meat_Post-stim _core_belief`, df2$`Meat_Post-stim _right_wrong`, df2$`Meat_Post-stim _moral_issue`, df2$`Meat_Post-stim _just_know`)
+plastic_pre <- c(df2$`Plastic_Pre-stim _core_belief`, df2$`Plastic_Pre-stim _just_know`, df2$`Plastic_Pre-stim _moral_issue`, df2$`Plastic_Pre-stim _right_wrong`)
+plastic_post <- c(df2$`Plastic_Post-stim _core_belief`, df2$`Plastic_Post-stim _just_know`, df2$`Plastic_Post-stim _right_wrong`, df2$`Plastic_Post-stim _moral_issue`)
+cars_pre <- c(df2$`Self-driving cars_Pre-stim _core_belief`, df2$`Self-driving cars_Pre-stim _just_know`, df2$`Self-driving cars_Pre-stim _moral_issue`, df2$`Self-driving cars_Pre-stim _right_wrong`)
+cars_post <- c(df2$`Self-driving cars_Post-stim _core_belief`, df2$`Self-driving cars_Post-stim _just_know`, df2$`Self-driving cars_Post-stim _moral_issue`, df2$`Self-driving cars_Post-stim _right_wrong`)
+ewaste_pre <- c(df2$`E-waste_Pre-stim _core_belief`, df2$`E-waste_Pre-stim _just_know`, df2$`E-waste_Pre-stim _moral_issue`, df2$`E-waste_Pre-stim _right_wrong`)
+ewaste_post <- c(df2$`E-waste_Post-stim _core_belief`, df2$`E-waste_Post-stim _just_know`, df2$`E-waste_Post-stim _moral_issue`, df2$`E-waste_Post-stim _right_wrong`)
+
+# Calculate Cronbach's Alpha for pre and post moralisation scores
+
+df2 %>% select(meat_pre) %>% psych::alpha()
+df2 %>% select(meat_post) %>% psych::alpha()
+df2 %>% select(cars_pre) %>% psych::alpha()
+df2 %>% select(cars_post) %>% psych::alpha()
+df2 %>% select(ewaste_pre) %>% psych::alpha()
+df2 %>% select(ewaste_post) %>% psych::alpha()
+df2 %>% select(plastic_pre) %>% psych::alpha()
+df2 %>% select(plastic_post) %>% psych::alpha()
+
+# Create table of mean composite values
+df2$meat_pre_mean <- mean(meat_pre)
+
+# paired t test before and after
+t.test(meat_pre, meat_post, paired = TRUE)
+t.test(cars_pre, cars_post, paired = TRUE)
+t.test(ewaste_pre, ewaste_post, paired = TRUE)
+t.test(plastic_pre, plastic_post, paired = TRUE)
+
+
+
 
 
 ```
