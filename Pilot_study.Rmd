@@ -27,9 +27,8 @@ setwd("E:/R stuff/Moralisation") #for home PC
 ## Data import and wrangling
 ```{r, warning=FALSE, message = FALSE}
 
-# Read in data frames
+# Read in data frame 1
 df1 <- read_csv("data-questionnaire-j12y.csv")
-df2 <- read_csv("data-task-4xn8.csv")
 
 # DATAFRAME 1
 
@@ -47,22 +46,26 @@ df1$Response <- as.factor(df1$Response)
 
 # DATAFRAME 2
 
-# Set up variable types and replace with meaningful names
+# Read in data frame 2
 df2 <- read_csv("data-task-4xn8.csv")
+
+# Set up variable types and replace with meaningful names
 df2$Response <- as.numeric(df2$Response)
 df2$`Spreadsheet Row` <- as.character(df2$`Spreadsheet Row`)
 df2$`Spreadsheet Row` <- mgsub(df2$`Spreadsheet Row`, c("1","2","3","4"), c("Meat", "Self-driving cars", "Plastic", "E-waste"))
-df2$`Screen Name` <- gsub("questionnaire", "", df2$`Screen Name`)
+df2$`Spreadsheet Row` <- as.factor(df2$`Spreadsheet Row`)
+df2$`Screen Name` <- gsub(" questionnaire", "", df2$`Screen Name`)
+df2$`Screen Name` <- as.factor(df2$`Screen Name`)
 df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
-colnames(df2)[1] <- "PID"
+colnames(df2)[colnames(df2)=="Participant Private ID"] <- "PID"
 
 
 # Create data-frame for video moralisation task (4xn8)
 df2 <- df2 %>% 
   filter(`Participant Status` == "complete" & is.na(Response) == FALSE ) %>%
-  select(c(`Event Index`, `Participant Private ID`, `Spreadsheet Row`, `Screen Number`, `Screen Name`, `Zone Name`, Response))
+  select(c(`Event Index`, `PID`, `Spreadsheet Row`, `Screen Name`, `Zone Name`, Response))
 
-df2 <- pivot_wider(df2, id_cols = `Participant Private ID`, names_from = c(`Spreadsheet Row`, `Screen Name`, `Zone Name`), values_from = Response)
+
 
 ```
 
@@ -83,39 +86,20 @@ df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>%
     xlab("") +
     ylab("")
 
-# Create groupings of pre and post scores per issue
-
-meat_pre <- c(df2$`Meat_Pre-stim _core_belief`, df2$`Meat_Pre-stim _right_wrong`, df2$`Meat_Pre-stim _moral_issue`, df2$`Meat_Pre-stim _just_know`)
-meat_post <- c(df2$`Meat_Post-stim _core_belief`, df2$`Meat_Post-stim _right_wrong`, df2$`Meat_Post-stim _moral_issue`, df2$`Meat_Post-stim _just_know`)
-plastic_pre <- c(df2$`Plastic_Pre-stim _core_belief`, df2$`Plastic_Pre-stim _just_know`, df2$`Plastic_Pre-stim _moral_issue`, df2$`Plastic_Pre-stim _right_wrong`)
-plastic_post <- c(df2$`Plastic_Post-stim _core_belief`, df2$`Plastic_Post-stim _just_know`, df2$`Plastic_Post-stim _right_wrong`, df2$`Plastic_Post-stim _moral_issue`)
-cars_pre <- c(df2$`Self-driving cars_Pre-stim _core_belief`, df2$`Self-driving cars_Pre-stim _just_know`, df2$`Self-driving cars_Pre-stim _moral_issue`, df2$`Self-driving cars_Pre-stim _right_wrong`)
-cars_post <- c(df2$`Self-driving cars_Post-stim _core_belief`, df2$`Self-driving cars_Post-stim _just_know`, df2$`Self-driving cars_Post-stim _moral_issue`, df2$`Self-driving cars_Post-stim _right_wrong`)
-ewaste_pre <- c(df2$`E-waste_Pre-stim _core_belief`, df2$`E-waste_Pre-stim _just_know`, df2$`E-waste_Pre-stim _moral_issue`, df2$`E-waste_Pre-stim _right_wrong`)
-ewaste_post <- c(df2$`E-waste_Post-stim _core_belief`, df2$`E-waste_Post-stim _just_know`, df2$`E-waste_Post-stim _moral_issue`, df2$`E-waste_Post-stim _right_wrong`)
-
 # Calculate Cronbach's Alpha for pre and post moralisation scores
 
-df2 %>% select(meat_pre) %>% psych::alpha()
-df2 %>% select(meat_post) %>% psych::alpha()
-df2 %>% select(cars_pre) %>% psych::alpha()
-df2 %>% select(cars_post) %>% psych::alpha()
-df2 %>% select(ewaste_pre) %>% psych::alpha()
-df2 %>% select(ewaste_post) %>% psych::alpha()
-df2 %>% select(plastic_pre) %>% psych::alpha()
-df2 %>% select(plastic_post) %>% psych::alpha()
+for (i in c(2, 6, 10, 14, 18, 22, 26, 30)) {
+print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(`Spreadsheet Row`, `Screen Name`, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
+}
 
 # Create table of mean composite values
-df2$meat_pre_mean <- mean(meat_pre)
+df2 %>% group_by(`Spreadsheet Row`, `Screen Name`) %>% summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% kbl() %>% kable_styling()
 
 # paired t test before and after
-t.test(meat_pre, meat_post, paired = TRUE)
-t.test(cars_pre, cars_post, paired = TRUE)
-t.test(ewaste_pre, ewaste_post, paired = TRUE)
-t.test(plastic_pre, plastic_post, paired = TRUE)
 
+df2 %>% filter(`Zone Name` != "slider") %>% group_by(`Spreadsheet Row`, PID, `Screen Name`) %>% summarise(R = mean(Response)) %>% pivot_wider(id_cols = PID, names_from = c(`Screen Name`,`Spreadsheet Row`), values_from = R) 
 
-
+df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>% t.test(Response ~ `Screen Name`, paired = TRUE)
 
 
 ```
