@@ -59,19 +59,19 @@ df2$`Screen Name` <- as.factor(df2$`Screen Name`)
 df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
 colnames(df2)[colnames(df2)=="Participant Private ID"] <- "PID"
 
-
 # Create data-frame for video moralisation task (4xn8)
 df2 <- df2 %>% 
   filter(`Participant Status` == "complete" & is.na(Response) == FALSE ) %>%
   select(c(`Event Index`, `PID`, `Spreadsheet Row`, `Screen Name`, `Zone Name`, Response))
 
-
+# Order pre/post factors for graphing
+df2$`Screen Name` <- ordered(df2$`Screen Name`, levels = c("Familiarisation", "Pre-stim", "Post-stim"))
 
 ```
 
 ## Data analysis
 ```{r, warning=FALSE, message = FALSE}
-# Extract comments for most emotional video
+# Extract comments for most emotional video PER PARTICIPANT
 tibble(df1$Response[df1$`Event Index` == 4], df1$Response[df1$`Event Index` == 8]) %>%
   kbl() %>% kable_styling(bootstrap_options = "striped")
 
@@ -95,11 +95,20 @@ print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, nam
 # Create table of mean composite values
 df2 %>% group_by(`Spreadsheet Row`, `Screen Name`) %>% summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% kbl() %>% kable_styling()
 
-# paired t test before and after
+# Plot
+df2 %>% ggplot(aes(x=`Screen Name`, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("")
 
-df2 %>% filter(`Zone Name` != "slider") %>% group_by(`Spreadsheet Row`, PID, `Screen Name`) %>% summarise(R = mean(Response)) %>% pivot_wider(id_cols = PID, names_from = c(`Screen Name`,`Spreadsheet Row`), values_from = R) 
+# paired t tests for moralisation score before and after
 
-df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>% t.test(Response ~ `Screen Name`, paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>%
+  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "Plastic", `Zone Name` != "slider") %>%
+  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "E-waste", `Zone Name` != "slider") %>%
+  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "Self-driving cars", `Zone Name` != "slider") %>%
+  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+
 
 
 ```
