@@ -17,6 +17,7 @@ library(ggridges)
 library(kableExtra)
 library(mgsub)
 library(vroom)
+library(stringr)
 library(tidyverse)
 
 #Set working directory
@@ -35,8 +36,10 @@ setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study
 df <- do.call(rbind,lapply(list.files(pattern = "*ques*"), read_csv))
 
 # create and tidy dataframe
-df <- df %>% select(`Event Index`, `Tree Node Key`, `Participant Private ID`, `Question Key`, Response) %>% filter(`Event Index` != "END OF FILE")
+df <- df %>% select(`Tree Node Key`, `Participant Private ID`, `Question Key`, Response) 
 df$`Tree Node Key` <- gsub("questionnaire-", "", df$`Tree Node Key`)
+df$Response[df$Response == "1 (not at all)"] <- "1"
+df$Response[df$Response == "5 (very much)"] <- "5"
 
 # replace node codes from Gorilla with descriptive names for variables
 df$`Tree Node Key` <- mgsub(df$`Tree Node Key`, 
@@ -45,5 +48,27 @@ df$`Tree Node Key` <- mgsub(df$`Tree Node Key`,
 
 # strip out unwanted event code data
 df <- df %>% filter(grepl("quantised", `Question Key`)|grepl("obj", `Question Key`))
+
+# tidy up variable names
+df$`Question Key` <- gsub("-quantised", "", df$`Question Key`)
+
+# Convert response field to numbers
+df$Response <- as.numeric(df$Response)
+
+```
+
+## Data import and wrangling
+```{r, warning=FALSE, message = FALSE}
+
+setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data")
+
+# read in questionnaire files
+df <- do.call(rbind,lapply(list.files(pattern = "*ques*"), read_csv))
+
+# create and tidy dataframe
+df <- df %>% select(`Tree Node Key`, `Participant Private ID`, `Question Key`, Response) 
+df$`Tree Node Key` <- gsub("questionnaire-", "", df$`Tree Node Key`)
+df$Response <- mgsub(df$Response, c("1 (not at all)", "5 (very much)"), c("1", "5"))
+
 
 ```
