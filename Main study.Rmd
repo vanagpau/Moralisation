@@ -1,0 +1,37 @@
+---
+title: "Pilot analysis"
+author: "28819459"
+date: "05/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries and working directory
+```{r, results='hide', warning=FALSE, message = FALSE}
+
+library(psych)
+library(ggridges)
+library(kableExtra)
+library(mgsub)
+library(vroom)
+library(tidyverse)
+
+#Set working directory
+setwd("E:/R stuff/Moralisation") #for home PC
+#setwd("/home/vanagpau/R/Moralisation") #for laptop
+
+```
+
+
+## Data import and wrangling
+```{r, warning=FALSE, message = FALSE}
+
+setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data")
+
+df <- do.call(rbind,lapply(list.files(pattern = "*ques*"), read.csv))
+
+
+```
