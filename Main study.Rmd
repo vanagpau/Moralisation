@@ -31,7 +31,19 @@ setwd("E:/R stuff/Moralisation") #for home PC
 
 setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data")
 
-df <- do.call(rbind,lapply(list.files(pattern = "*ques*"), read.csv))
+# read in questionnaire files
+df <- do.call(rbind,lapply(list.files(pattern = "*ques*"), read_csv))
 
+# create and tidy dataframe
+df <- df %>% select(`Event Index`, `Tree Node Key`, `Participant Private ID`, `Question Key`, Response) %>% filter(`Event Index` != "END OF FILE")
+df$`Tree Node Key` <- gsub("questionnaire-", "", df$`Tree Node Key`)
+
+# replace node codes from Gorilla with descriptive names for variables
+df$`Tree Node Key` <- mgsub(df$`Tree Node Key`, 
+                            c("4bw4","6bjn","a8ji","ay7m","dbk4","dgk1","ekt9","i1ol","kgzr","ooth","ottq","q986","rujl","trbd","u4a6","u6pg","ud7d","udca","y2xo","zbd1","fd9l","v1sb","qtcg","ksqr","webp"), 
+                            c("Beh_1","Moremo_3","Hed_1","Diss_4","Debrief","Moremo_1","Morcog_3","Moral_3","Moral_4","Moremo_4","Beh_2","Consent","Diss_3","Hed_4","Moral_1","Diss_1","Hed_3","Morcog_1","Morcog_4","MIS","Moremo_2","Morcog_2","Diss_2","Moral_2","Hed_2"))
+
+# strip out unwanted event code data
+df <- df %>% filter(grepl("quantised", `Question Key`)|grepl("obj", `Question Key`))
 
 ```
