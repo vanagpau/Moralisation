@@ -16,7 +16,7 @@ library(pwr)
 
 
 ## PAUL SETTINGS
-setwd("E:/R stuff/TMS_placement")
+setwd("E:/R stuff/Moralisation")
 
 ```
 
@@ -24,6 +24,9 @@ setwd("E:/R stuff/TMS_placement")
 ```{r}
 
 #Stage 1
+
+pwr.t.test(n = 30,power=0.8,sig.level=0.05,type="paired",alternative="two.sided")
+
 
 #Study 2
 
