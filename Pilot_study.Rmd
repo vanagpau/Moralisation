@@ -27,8 +27,10 @@ setwd("E:/R stuff/Moralisation") #for home PC
 ## Data import and wrangling
 ```{r, warning=FALSE, message = FALSE}
 
+setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/Pilot actual DATA")
+
 # Read in data frame 1
-df1 <- read_csv("data-questionnaire-j12y.csv")
+df1 <- read_csv("data_exp_44331-v24_questionnaire-j12y.csv")
 
 # DATAFRAME 1
 
@@ -47,7 +49,7 @@ df1$Response <- as.factor(df1$Response)
 # DATAFRAME 2
 
 # Read in data frame 2
-df2 <- read_csv("data-task-4xn8.csv")
+df2 <- read_csv("data_exp_44331-v24_task-4xn8.csv")
 
 # Set up variable types and replace with meaningful names
 df2$Response <- as.numeric(df2$Response)
