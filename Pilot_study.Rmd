@@ -106,7 +106,7 @@ print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, nam
 df2 %>% group_by(`Spreadsheet Row`, Question) %>% summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% kbl() %>% kable_styling()
 
 # Plot
-df2 %>% ggplot(aes(x=Question, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("")
+df2 %>% ggplot(aes(x=Question, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
 
 # paired t tests for moralisation score before and after
 
