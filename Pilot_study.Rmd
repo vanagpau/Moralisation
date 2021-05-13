@@ -16,6 +16,9 @@ library(psych)
 library(ggridges)
 library(kableExtra)
 library(mgsub)
+library(rstatix)
+library(psych)
+library(pwr)
 library(tidyverse)
 
 #Set working directory
@@ -58,16 +61,17 @@ df2$`Spreadsheet Row` <- mgsub(df2$`Spreadsheet Row`, c("1","2","3","4"), c("Mea
 df2$`Spreadsheet Row` <- as.factor(df2$`Spreadsheet Row`)
 df2$`Screen Name` <- gsub(" questionnaire", "", df2$`Screen Name`)
 df2$`Screen Name` <- as.factor(df2$`Screen Name`)
+colnames(df2)[colnames(df2)=="Screen Name"] <- "Question"
 df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
 colnames(df2)[colnames(df2)=="Participant Private ID"] <- "PID"
 
 # Create data-frame for video moralisation task (4xn8)
 df2 <- df2 %>% 
   filter(`Participant Status` == "complete" & is.na(Response) == FALSE ) %>%
-  select(c(`Event Index`, `PID`, `Spreadsheet Row`, `Screen Name`, `Zone Name`, Response))
+  select(c(`Event Index`, `PID`, `Spreadsheet Row`, Question, `Zone Name`, Response))
 
 # Order pre/post factors for graphing
-df2$`Screen Name` <- ordered(df2$`Screen Name`, levels = c("Familiarisation", "Pre-stim", "Post-stim"))
+df2$Question <- ordered(df2$Question, levels = c("Familiarisation", "Pre-stim", "Post-stim"))
 
 ```
 
@@ -79,37 +83,56 @@ tibble(df1$Response[df1$`Event Index` == 4], df1$Response[df1$`Event Index` == 8
 
 # Plot: Ridge histogram of emotion ranking
 df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>% 
-  ggplot( aes(y=Response, x=`Question Key`,  fill=Response)) +
-    geom_density_ridges(alpha=0.6, stat="binline", bins=8, scale = 0.7) +
-    theme_ridges() +
+  ggplot( aes(x=`Question Key`,y=Response,  height = stat(count), fill = Response)) +
+    geom_density_ridges(alpha=0.6, stat="binline", bins=4, scale = 0.95) +
     theme(legend.position="none",
       strip.text.x = element_text(size = 8)
        )  + theme(axis.text.x = element_text(angle = 30)) +
     xlab("") +
     ylab("")
 
+
+
+
+
+
 # Calculate Cronbach's Alpha for pre and post moralisation scores
 
 for (i in c(2, 6, 10, 14, 18, 22, 26, 30)) {
-print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(`Spreadsheet Row`, `Screen Name`, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
+print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(`Spreadsheet Row`, Question, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
 }
 
 # Create table of mean composite values
-df2 %>% group_by(`Spreadsheet Row`, `Screen Name`) %>% summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% kbl() %>% kable_styling()
+df2 %>% group_by(`Spreadsheet Row`, Question) %>% summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% kbl() %>% kable_styling()
 
 # Plot
-df2 %>% ggplot(aes(x=`Screen Name`, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("")
+df2 %>% ggplot(aes(x=Question, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("")
 
 # paired t tests for moralisation score before and after
 
 df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>%
-  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+  t.test(Response ~ Question, data = ., paired = TRUE)
 df2 %>% filter(`Spreadsheet Row` == "Plastic", `Zone Name` != "slider") %>%
-  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+  t.test(Response ~ Question, data = ., paired = TRUE)
 df2 %>% filter(`Spreadsheet Row` == "E-waste", `Zone Name` != "slider") %>%
-  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+  t.test(Response ~ Question, data = ., paired = TRUE)
 df2 %>% filter(`Spreadsheet Row` == "Self-driving cars", `Zone Name` != "slider") %>%
-  t.test(Response ~ `Screen Name`, data = ., paired = TRUE)
+  t.test(Response ~ Question, data = ., paired = TRUE)
+
+# Effect sizes
+# Convert Question variable into character to enable use of cohen's d function
+df2$Question <- as.character(df2$Question)
+
+# create vector of issues for looping
+issues <- c("Plastic", "E-waste", "Meat", "Self-driving cars")
+
+# create function to calculate Cohen's d and put into table
+cohen_fn = function(var) {
+  data.frame(df2 %>% filter(`Spreadsheet Row` == var, `Zone Name` != "slider") %>% rstatix::cohens_d(., Response ~ Question, paired = TRUE), Issue = var)
+}
+
+# run the calculations and produce tables
+lapply(issues, cohen_fn)
 
 
 
