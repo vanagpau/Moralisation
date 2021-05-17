@@ -129,9 +129,13 @@ cohen_fn = function(var) {
   data.frame( df2 %>% filter(`Spreadsheet Row` == var, `Zone Name` != "slider")%>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% ungroup() %>% rstatix::cohens_d(., m ~ Question, paired = TRUE), Issue = var)
 }
 
+
 # run the calculations and produce tables
 lapply(issues, cohen_fn)
 
+
+df1 %>% filter(`Event Index` >3 & `Event Index` < 8) %>% 
+  filter(`Question Key` == "Emotion Rank 1" & Response == "Meat" | `Question Key` == "Emotion Rank 2" & Response == "Plastics" | `Question Key` == "Emotion Rank 3" & Response == "E-waste" | `Question Key` == "Emotion Rank 4" & Response == "Self-driving cars")
 
 
 ```
