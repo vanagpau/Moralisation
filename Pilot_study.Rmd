@@ -91,31 +91,36 @@ df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>%
     xlab("") +
     ylab("")
 
-
-
-
-
-
 # Calculate Cronbach's Alpha for pre and post moralisation scores
 
 for (i in c(2, 6, 10, 14, 18, 22, 26, 30)) {
 print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(`Spreadsheet Row`, Question, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
 }
 
-# Create table of mean composite values
-df2 %>% group_by(`Spreadsheet Row`, Question) %>% summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% kbl() %>% kable_styling()
+# Create table of mean composite values for each issue
+df2 %>% group_by(`Spreadsheet Row`, Question) %>% # group by issue and question (familiar/pre/post)
+  summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>% # calculate mean and standard error
+  kbl() %>% kable_styling() # make table
 
 # Plot
 df2 %>% ggplot(aes(x=Question, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
 
+# Alternative plot using means comparison not individual question items
+df2 %>% group_by(Question, PID, `Spreadsheet Row`) %>% mutate(m = mean(Response)) %>% select(PID, Question, m, `Spreadsheet Row`) %>% unique()  %>% ggplot(aes(x=`Spreadsheet Row`, y=m, fill=Question)) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Score") + xlab("")
+
 # paired t tests for moralisation score before and after
 
-df2 %>% filter(`Spreadsheet Row` == "Self-driving cars", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% ungroup() %>% t.test(m ~ Question, data = ., paired = TRUE)
-df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% ungroup() %>% t.test(m ~ Question, data = ., paired = TRUE)
-df2 %>% filter(`Spreadsheet Row` == "E-waste", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% ungroup() %>% t.test(m ~ Question, data = ., paired = TRUE)
-df2 %>% filter(`Spreadsheet Row` == "Plastic", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% ungroup() %>% t.test(m ~ Question, data = ., paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "Self-driving cars", `Zone Name` != "slider") %>% # select cars issue and ignore slider(familiarisation) questions
+  group_by(Question, PID) %>% # group by question (pre/post) and participant ID
+  mutate(m = mean(Response)) %>% # create variable m which is mean of questionnaire items in pre and post for each participant 
+  select(Question, m) %>% # select only columns required (not strictly necessary but neater)
+  unique() %>% # collapse duplicate rows
+  t.test(m ~ Question, data = ., paired = TRUE) # perform paired t-test of how mean (m) depends on Questions (pre / post)
 
-
+# repeat t-test for each issue
+df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "Plastic", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
+df2 %>% filter(`Spreadsheet Row` == "E-waste", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
 
 # Effect sizes
 # Convert Question variable into character to enable use of cohen's d function
@@ -126,16 +131,25 @@ issues <- c("Plastic", "E-waste", "Meat", "Self-driving cars")
 
 # create function to calculate Cohen's d and put into table
 cohen_fn = function(var) {
-  data.frame( df2 %>% filter(`Spreadsheet Row` == var, `Zone Name` != "slider")%>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% ungroup() %>% rstatix::cohens_d(., m ~ Question, paired = TRUE), Issue = var)
+  data.frame( df2 %>% # create a data frame to produce a tablular output at the end
+                filter(`Spreadsheet Row` == var, `Zone Name` != "slider") %>%# select issue and ignore slider(familiarisation) questions
+                group_by(Question, PID) %>% # group by question (pre/post) and participant ID
+                mutate(m = mean(Response)) %>% # create variable m which is mean of questionnaire items in pre and post for each participant 
+                select(Question, m) %>%# select only columns required)
+                unique() %>% # collapse duplicate rows
+                ungroup() %>% # remove grouping (otherwise cohens_d won't recognise columns)
+                rstatix::cohens_d(., m ~ Question, paired = TRUE), # run cohens d
+              Issue = var) # add name of variable to dataframe for clarity
 }
 
-
-# run the calculations and produce tables
+# loop through each issue and produce tables
 lapply(issues, cohen_fn)
 
-
-df1 %>% filter(`Event Index` >3 & `Event Index` < 8) %>% 
-  filter(`Question Key` == "Emotion Rank 1" & Response == "Meat" | `Question Key` == "Emotion Rank 2" & Response == "Plastics" | `Question Key` == "Emotion Rank 3" & Response == "E-waste" | `Question Key` == "Emotion Rank 4" & Response == "Self-driving cars")
+# visual check for occurence of default ordering = how many times does "4" appear in following table = 2
+df1 %>% filter(`Event Index` >3 & `Event Index` < 8) %>% # select only emotion rank q's
+  filter(`Question Key` == "Emotion Rank 1" & Response == "Meat" | `Question Key` == "Emotion Rank 2" & Response == "Plastics" | `Question Key` == "Emotion Rank 3" & Response == "E-waste" | `Question Key` == "Emotion Rank 4" & Response == "Self-driving cars") %>% # select reponses corresponding to default order
+  select(`Participant Private ID`) %>% # select participant ID variable only
+  table() # create table of number of times that participant appears in table, if = 4 then this exactly matches the default ordering
 
 
 ```
