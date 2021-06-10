@@ -108,7 +108,7 @@ df2 %>% group_by(`Spreadsheet Row`, Question) %>%
 df2 %>% ggplot(aes(x=Question, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
 
 # Alternative plot using means comparison not individual question items
-df2 %>% group_by(Question, PID, `Spreadsheet Row`) %>% mutate(m = mean(Response)) %>% select(PID, Question, m, `Spreadsheet Row`) %>% unique()  %>% ggplot(aes(x=`Spreadsheet Row`, y=m, fill=Question)) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Score") + xlab("")
+df2 %>% group_by(Question, PID, `Spreadsheet Row`) %>% mutate(m = mean(Response)) %>% select(PID, Question, m, `Spreadsheet Row`) %>% unique()  %>% ggplot(aes(x=`Spreadsheet Row`, y=m, fill=Question)) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Score") + xlab("") + theme(legend.position="bottom") 
 
 # paired t tests for moralisation score before and after
 

@@ -27,16 +27,20 @@ files <- list.files(pattern = "questionnaire")
 
 # Create individual dataframe for each questionnaire node
 for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there are 5 dummy ppts
-  nam <- paste("df", ((i-1)/5), sep = "") #create a name for each dataframe from df0
+  nam <- paste("n_", substring(files[i], 20, 23), sep = "") #create a name for each question matching Gorilla node name
   #create dataframe called df within the loop which binds the 5 sequential files together
     df <- rbind(read_csv(files[i]), read_csv(files[i+1]),  read_csv(files[i+2]),read_csv(files[i+3]),read_csv(files[i+4]))
     df <- df %>% filter(`Event Index` != "END OF FILE") # remove all END OF FILE lines
     assign(nam, df) #assign df to the name of the dataframe created above
 }
 
+```
+## Data wrangle
+```{r}
+
+
 
 ```
-
 
 
 
