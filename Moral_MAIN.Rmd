@@ -1,0 +1,43 @@
+---
+title: "Moralisation_MAIN"
+author: "Paul V"
+date: "10/06/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+```{r}
+
+library(tidyverse)
+
+```
+
+
+## Import dummy data
+```{r}
+
+setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data") 
+
+# Find files and create list of them
+files <- list.files(pattern = "questionnaire")
+
+# Create individual dataframe for each questionnaire node
+for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there are 5 dummy ppts
+  nam <- paste("df", ((i-1)/5), sep = "") #create a name for each dataframe from df0
+  #create dataframe called df within the loop which binds the 5 sequential files together
+    df <- rbind(read_csv(files[i]), read_csv(files[i+1]),  read_csv(files[i+2]),read_csv(files[i+3]),read_csv(files[i+4]))
+    df <- df %>% filter(`Event Index` != "END OF FILE") # remove all END OF FILE lines
+    assign(nam, df) #assign df to the name of the dataframe created above
+}
+
+
+```
+
+
+
+
+
