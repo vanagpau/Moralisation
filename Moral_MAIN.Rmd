@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Libraries
-```{r}
+```{r, message=FALSE}
 
 library(tidyverse)
 
@@ -18,7 +18,7 @@ library(tidyverse)
 
 
 ## Import dummy data
-```{r}
+```{r, message=FALSE}
 
 setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data") 
 
@@ -38,10 +38,11 @@ for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there a
 ## Data wrangle
 ```{r}
 
-
+n_auod %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", n_auod$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) %>% group_by(`Participant Private ID`) %>% summarise (HRPS = mean(Response))
 
 ```
 
 
 
+n_auod %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", n_auod$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) %>% group_by(`Participant Private ID`) %>% summarise (HRPS = mean(Response))
 
