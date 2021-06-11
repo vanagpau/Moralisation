@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Libraries
 ```{r, message=FALSE}
 
+library(kableExtra)
 library(tidyverse)
 
 ```
@@ -29,20 +30,54 @@ files <- list.files(pattern = "questionnaire")
 for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there are 5 dummy ppts
   nam <- paste("n_", substring(files[i], 20, 23), sep = "") #create a name for each question matching Gorilla node name
   #create dataframe called df within the loop which binds the 5 sequential files together
-    df <- rbind(read_csv(files[i]), read_csv(files[i+1]),  read_csv(files[i+2]),read_csv(files[i+3]),read_csv(files[i+4]))
-    df <- df %>% filter(`Event Index` != "END OF FILE") # remove all END OF FILE lines
-    assign(nam, df) #assign df to the name of the dataframe created above
+    df_temp <- rbind(read_csv(files[i]), read_csv(files[i+1]),  read_csv(files[i+2]),read_csv(files[i+3]),read_csv(files[i+4]))
+    df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") # remove all END OF FILE lines
+    assign(nam, df_temp) #assign df to the name of the dataframe created above
 }
+
+
 
 ```
 ## Data wrangle
 ```{r}
 
-n_auod %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", n_auod$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) %>% group_by(`Participant Private ID`) %>% summarise (HRPS = mean(Response))
+#create list of dataframes
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+
+# Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
+for (i in 1:length(dflist)) {
+df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) 
+rm()
+# Add new data frame from this file to overall data frame
+  if (i == 1) {df <- df_temp} else {df <- rbind(df, df_temp)}
+
+}
+
+#remove unnecessary dfs from environment
+rm(df_temp)
+rm(list = dflist)
+
+# Convert chrs to numbers
+# First convert categorical variables to number characters
+df$Response <- str_replace_all(df$Response, c("Not at all opposed" = "0", "Slightly opposed" = "1", "Somewhat opposed" = "2", "Strongly opposed" = "3")   )
+df$Response <- as.numeric(df$Response)
+
+#Reverse score item MIS4
+df[df$`Question Key` == "MIS4",'Response'] <- df %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
 
 ```
 
+## Assumption checks
+```{r}
+
+# Normality (Shapiro/QQ)
+
+# Reliability - Cronbach alpha
+
+# Unifactorial scales - HPRS/MIS
+
+# 
 
 
-n_auod %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", n_auod$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) %>% group_by(`Participant Private ID`) %>% summarise (HRPS = mean(Response))
+```
 
