@@ -51,7 +51,7 @@ rm(df_temp)
 
 
 #create list of dataframes
-#dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 # Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
 # for (i in 1:length(dflist)) {
@@ -72,26 +72,59 @@ rm(df_temp)
 #rm(df_temp)
 #rm(list = dflist)
 
-# Convert chrs to numbers
-# First convert categorical variables to number characters
-df$Response <- str_replace_all(df$Response, c("Not at all opposed" = "0", "Slightly opposed" = "1", "Somewhat opposed" = "2", "Strongly opposed" = "3")   )
-df$Response <- as.numeric(df$Response)
+# replace categorical answers with numeric
+n_4kh5$Response <- str_replace_all(n_4kh5$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
 
-#Reverse score item MIS4
-df[df$`Question Key` == "MIS4",'Response'] <- df %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
+n_k47v$Response <- str_replace_all(n_k47v$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
 
+n_sjbg$Response <- str_replace_all(n_sjbg$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
+
+n_wxzl$Response <- str_replace_all(n_wxzl$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
+
+
+# Reverse score item MIS4
+n_ubog[n_ubog$`Question Key` == "MIS4",'Response'] <- n_ubog %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
+
+# Add session no. info to the dataframes
+n_4kh5$session <- 2
+n_5hpk$session <- 3
+n_9opr$session <- 2
+n_daab$session <- 2
+n_fhoy$session <- 1
+n_hhto$session <- 1
+n_k47v$session <- 4
+n_l8iw$session <- 4
+n_lpz3$session <- 3
+n_luva$session <- 3
+n_okdo$session <- 1
+n_p34a$session <- 1
+n_sjbg$session <- 1
+n_t7dh$session <- 1
+n_txy2$session <- 2
+n_ubog$session <- 1
+n_vacc$session <- 3
+n_wkz6$session <- 4
+n_wxzl$session <- 3
+n_xdo3$session <- 2
+n_xuky$session <- 4
+n_zd7j$session <- 2
+n_zm3i$session <- 4
 
 
 # Calculate mean scores for variables within individal dataframes (one variable / dataframe)
 # Dissonance reduction
 
-df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(dissonance_reduction = mean(Response))
+df %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(dissonance_reduction = mean(Response))
 # Moral cognition
-df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "cog") == TRUE) %>% mutate(moral_cognition = mean(Response))
-# Moral piggybacking
-df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "pig") == TRUE) %>% mutate(moral_piggybacking = mean(Response))
 
-df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "pig") == TRUE) %>% mutate(moral_piggybacking = mean(Response))
 
 
 ```
