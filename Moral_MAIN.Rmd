@@ -13,7 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message=FALSE}
 
 library(kableExtra)
+library(psych)
 library(tidyverse)
+
 
 ```
 
@@ -29,29 +31,47 @@ files <- list.files(pattern = "questionnaire")
 # Create individual dataframe for each questionnaire node
 for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there are 5 dummy ppts
   nam <- paste("n_", substring(files[i], 20, 23), sep = "") #create a name for each question matching Gorilla node name
-  #create dataframe called df within the loop which binds the 5 sequential files together
+  #create dataframe called df within the loop which binds the 5 sequential participant files together
     df_temp <- rbind(read_csv(files[i]), read_csv(files[i+1]),  read_csv(files[i+2]),read_csv(files[i+3]),read_csv(files[i+4]))
-    df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") # remove all END OF FILE lines
+    df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") %>%
+    filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
+           !grepl("quantised", `Question Key`) ) %>%
+  select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
     assign(nam, df_temp) #assign df to the name of the dataframe created above
 }
 
-
+#remove df_temp from workspace to prevent double counting
+rm(df_temp)
 
 ```
 ## Data wrangle
 ```{r}
 
+
+
 #create list of dataframes
 dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 # Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
+# for (i in 1:length(dflist)) {
+# df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% 
+#   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`) 
+# rm()
+# # Add new data frame from this file to overall data frame
+#   if (i == 1) {df <- df_temp} else {df <- rbind(df, df_temp)}
+# 
+# }
+
 for (i in 1:length(dflist)) {
-df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) 
-rm()
-# Add new data frame from this file to overall data frame
-  if (i == 1) {df <- df_temp} else {df <- rbind(df, df_temp)}
+dftemp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>%
+  select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`) %>%
+  
+
 
 }
+
+# Rename PID column
+# colnames(df)[colnames(df)=="Participant Private ID"] <- "PID"
 
 #remove unnecessary dfs from environment
 rm(df_temp)
@@ -65,14 +85,36 @@ df$Response <- as.numeric(df$Response)
 #Reverse score item MIS4
 df[df$`Question Key` == "MIS4",'Response'] <- df %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
 
+# Convert to tidy format: 1 row per observation, 1 column per variable
+
+
+
+# Calculate mean scores for each variable and add to dataframe
+# Dissonance reduction
+
+df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(dissonance_reduction = mean(Response))
+# Moral cognition
+df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "cog") == TRUE) %>% mutate(moral_cognition = mean(Response))
+# Moral piggybacking
+df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "pig") == TRUE) %>% mutate(moral_piggybacking = mean(Response))
+
+df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "pig") == TRUE) %>% mutate(moral_piggybacking = mean(Response))
+
+
 ```
 
 ## Assumption checks
 ```{r}
 
+# Reliability - Cronbach alpha
+
+df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(alpha = psych::alpha(Response))
+
 # Normality (Shapiro/QQ)
 
-# Reliability - Cronbach alpha
+
+
+
 
 # Unifactorial scales - HPRS/MIS
 
@@ -80,4 +122,17 @@ df[df$`Question Key` == "MIS4",'Response'] <- df %>% filter(`Question Key`== "MI
 
 
 ```
+
+setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data") 
+
+#create list of dataframes
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+
+# Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
+for (i in 1:length(dflist)) {
+df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) 
+rm()
+# Add new data frame from this file to overall data frame
+  if (i == 1) {df <- df_temp} else {df <- rbind(df, df_temp)}
+
 
