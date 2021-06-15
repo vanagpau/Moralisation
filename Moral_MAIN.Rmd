@@ -37,6 +37,7 @@ for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there a
     filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
            !grepl("quantised", `Question Key`) ) %>%
   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
+    colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID"
     assign(nam, df_temp) #assign df to the name of the dataframe created above
 }
 
@@ -50,7 +51,7 @@ rm(df_temp)
 
 
 #create list of dataframes
-dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+#dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 # Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
 # for (i in 1:length(dflist)) {
@@ -62,20 +63,14 @@ dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 # 
 # }
 
-for (i in 1:length(dflist)) {
-dftemp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>%
-  select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`) %>%
-  
 
-
-}
 
 # Rename PID column
 # colnames(df)[colnames(df)=="Participant Private ID"] <- "PID"
 
 #remove unnecessary dfs from environment
-rm(df_temp)
-rm(list = dflist)
+#rm(df_temp)
+#rm(list = dflist)
 
 # Convert chrs to numbers
 # First convert categorical variables to number characters
@@ -85,11 +80,9 @@ df$Response <- as.numeric(df$Response)
 #Reverse score item MIS4
 df[df$`Question Key` == "MIS4",'Response'] <- df %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
 
-# Convert to tidy format: 1 row per observation, 1 column per variable
 
 
-
-# Calculate mean scores for each variable and add to dataframe
+# Calculate mean scores for variables within individal dataframes (one variable / dataframe)
 # Dissonance reduction
 
 df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(dissonance_reduction = mean(Response))
