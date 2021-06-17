@@ -112,6 +112,9 @@ n_zm3i$session <- 4
 
 # Calculate mean scores for variables within individal dataframes (one variable / dataframe)
 
+# create list of variable names to search for
+var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
+
 # Create function to calculate variable scores
 
 fn_var <- function(d, s1, s2 = NULL, s3 = NULL) {
@@ -122,9 +125,9 @@ fn_var <- function(d, s1, s2 = NULL, s3 = NULL) {
  assign(nam, df_temp, envir = .GlobalEnv)
 }
 
-fn_var("n_k47v", "hed")
+lapply(dflist, fn_var, "att")
 
-var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
+
 
 for (i in 1:length(var_names)) {
 df_temp2 <- lapply(dflist, fn_var, s1 = var_names[i] )
