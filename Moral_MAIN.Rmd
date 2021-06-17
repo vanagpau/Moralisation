@@ -23,6 +23,9 @@ library(tidyverse)
 ## Import dummy data
 ```{r, message=FALSE}
 
+#clear workspace
+rm(list = ls())
+
 setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data") 
 
 # Find files and create list of them
@@ -45,7 +48,7 @@ for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there a
 rm(df_temp)
 
 ```
-## Data wrangle
+## Data wrangle 1
 ```{r}
 
 # Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
@@ -68,15 +71,12 @@ dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 n_4kh5$Response <- str_replace_all(n_4kh5$Response, c(
     "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
   as.numeric()
-
 n_k47v$Response <- str_replace_all(n_k47v$Response, c(
     "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
   as.numeric()
-
 n_sjbg$Response <- str_replace_all(n_sjbg$Response, c(
     "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
   as.numeric()
-
 n_wxzl$Response <- str_replace_all(n_wxzl$Response, c(
     "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
   as.numeric()
@@ -114,38 +114,38 @@ n_zm3i$session <- 4
 
 # create list of variable names to search for
 var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
+```
 
+# Data wrangle 2
+```{r}
 # Create function to calculate variable scores
 
-fn_var <- function(d, s1, s2 = NULL, s3 = NULL) {
- nam <- paste0(d, s1, s2, s3)
+fn_var <- function(d, s1) {
+ nam <- paste0(s1, get(d)[1,5]) #create dataframe name from input dataframe and variable string
  print(nam)
- df_temp <<- get(d) %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, s1) == TRUE) %>% mutate(m = mean(Response)) %>% select(PID, session, m) %>% distinct()
- if (nrow(df_temp) == 0) return(NULL)
- assign(nam, df_temp, envir = .GlobalEnv)
+ #filter and mutate to create new dataframe
+ df_temp <<- get(d) %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, s1) == TRUE) %>% mutate("{s1}" := mean(Response)) %>% select(PID, session, {s1}) %>% distinct()
+ if (nrow(df_temp) == 0) return(NULL) #if no data then end function
+ assign(nam, df_temp, envir = .GlobalEnv) #assign new dataframe to global environment ie. outside of local function
 }
-
-lapply(dflist, fn_var, "att")
-
-
 
 for (i in 1:length(var_names)) {
-df_temp2 <- lapply(dflist, fn_var, s1 = var_names[i] )
-print (nrow(df_temp2) ) 
+lapply(dflist, fn_var, s1 = var_names[i] )
 }
 
+# remove old dataframes
+rm(list = dflist)
+rm(df_temp)
 
-lapply(dflist, fn_var, s1 = "hed")
- fn_var("n_l8iw", "hed")
+a <- rbind(att1, att2, att3, att4)
 
+#create list of remaining dataframes
+# dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+# plyr::join_all(list(dflist), by=c('PID', "session"), type='left')
 
-n_4kh5 %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "cog") == TRUE) %>% mutate(moral_cognition = mean(Response)) %>% select(PID, session, moral_cognition) %>% distinct()
+plyr::join_all(list(mget(dflist)), by=c("PID", "session"), type='left')
 
-n_4kh5 %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "att") == TRUE) %>% mutate(attitude = mean(Response))
-n_4kh5 %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "pig") == TRUE) %>% mutate(piggybacking = mean(Response))
-
-# Moral cognition
-
+plyr::join_all(list(a, behav1), by=c("PID", "session"), type='left')
 
 
 ```
