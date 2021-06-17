@@ -48,18 +48,8 @@ for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there a
 rm(df_temp)
 
 ```
-## Data wrangle 1
+## Data wrangle
 ```{r}
-
-# Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
-# for (i in 1:length(dflist)) {
-# df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% 
-#   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`) 
-# rm()
-# # Add new data frame from this file to overall data frame
-#   if (i == 1) {df <- df_temp} else {df <- rbind(df, df_temp)}
-# 
-# }
 
 #remove unnecessary dfs from environment (consent, debrief nodes etc)
 rm(n_1dbi,n_o3u2, n_q986)
@@ -110,25 +100,22 @@ n_xuky$session <- 4
 n_zd7j$session <- 2
 n_zm3i$session <- 4
 
-# Calculate mean scores for variables within individal dataframes (one variable / dataframe)
+## Calculate mean scores for variables within individal dataframes (one variable / dataframe)
 
 # create list of variable names to search for
 var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
-```
 
-# Data wrangle 2
-```{r}
 # Create function to calculate variable scores
-
 fn_var <- function(d, s1) {
  nam <- paste0(s1, get(d)[1,5]) #create dataframe name from input dataframe and variable string
  print(nam)
- #filter and mutate to create new dataframe
+ #filter and mutate to create new dataframe by looking for the string s1 in Question Key column
  df_temp <<- get(d) %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, s1) == TRUE) %>% mutate("{s1}" := mean(Response)) %>% select(PID, session, {s1}) %>% distinct()
- if (nrow(df_temp) == 0) return(NULL) #if no data then end function
- assign(nam, df_temp, envir = .GlobalEnv) #assign new dataframe to global environment ie. outside of local function
+ if (nrow(df_temp) == 0) return(NULL) #if no data in dataframe (ie. string s1 doesn't exist in this dataframe) then end function
+ assign(nam, df_temp, envir = .GlobalEnv) #otherwise assign new dataframe to global environment ie. outside of local function
 }
 
+# Apply this function across all dataframes and variable names
 for (i in 1:length(var_names)) {
 lapply(dflist, fn_var, s1 = var_names[i] )
 }
@@ -137,16 +124,21 @@ lapply(dflist, fn_var, s1 = var_names[i] )
 rm(list = dflist)
 rm(df_temp)
 
-a <- rbind(att1, att2, att3, att4)
+#bind all common variables together
+t1 <- rbind(att1, att2, att3, att4)
+t2 <- rbind(behav1, behav2)
+t3 <- rbind(cog1, cog2, cog3, cog4)
+t4 <- rbind(diss1, diss2, diss3, diss4)
+t5 <- rbind(emo_obj1, emo_obj2, emo_obj3, emo_obj4)
+t6 <- rbind(emo1, emo2, emo3, emo4)
+t7 <- rbind(hed1, hed2, hed3, hed4)
+t8 <- rbind(moral1, moral2, moral3, moral4)
+t9 <- rbind(pig1, pig2, pig3, pig4)
 
-#create list of remaining dataframes
-# dflist <- Filter(function(x) is.data.frame(get(x)), ls())
-# plyr::join_all(list(dflist), by=c('PID', "session"), type='left')
+# create final dataframe by column binding t1-t9 matching by participant ID and session number
+df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, HPRS1), by=c("PID", "session"), type='left')
 
-plyr::join_all(list(mget(dflist)), by=c("PID", "session"), type='left')
-
-plyr::join_all(list(a, behav1), by=c("PID", "session"), type='left')
-
+# have a nice cup of tea and a biscuit
 
 ```
 
