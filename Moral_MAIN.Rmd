@@ -48,11 +48,6 @@ rm(df_temp)
 ## Data wrangle
 ```{r}
 
-
-
-#create list of dataframes
-dflist <- Filter(function(x) is.data.frame(get(x)), ls())
-
 # Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
 # for (i in 1:length(dflist)) {
 # df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% 
@@ -63,14 +58,11 @@ dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 # 
 # }
 
+#remove unnecessary dfs from environment (consent, debrief nodes etc)
+rm(n_1dbi,n_o3u2, n_q986)
 
-
-# Rename PID column
-# colnames(df)[colnames(df)=="Participant Private ID"] <- "PID"
-
-#remove unnecessary dfs from environment
-#rm(df_temp)
-#rm(list = dflist)
+#create list of remaining dataframes
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 # replace categorical answers with numeric
 n_4kh5$Response <- str_replace_all(n_4kh5$Response, c(
@@ -89,7 +81,6 @@ n_wxzl$Response <- str_replace_all(n_wxzl$Response, c(
     "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
   as.numeric()
 
-
 # Reverse score item MIS4
 n_ubog[n_ubog$`Question Key` == "MIS4",'Response'] <- n_ubog %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
 
@@ -97,6 +88,7 @@ n_ubog[n_ubog$`Question Key` == "MIS4",'Response'] <- n_ubog %>% filter(`Questio
 n_4kh5$session <- 2
 n_5hpk$session <- 3
 n_9opr$session <- 2
+n_auod$session <- 1
 n_daab$session <- 2
 n_fhoy$session <- 1
 n_hhto$session <- 1
@@ -118,11 +110,37 @@ n_xuky$session <- 4
 n_zd7j$session <- 2
 n_zm3i$session <- 4
 
-
 # Calculate mean scores for variables within individal dataframes (one variable / dataframe)
-# Dissonance reduction
 
-df %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(dissonance_reduction = mean(Response))
+# Create function to calculate variable scores
+
+fn_var <- function(d, s1, s2 = NULL, s3 = NULL) {
+ nam <- paste0(d, s1, s2, s3)
+ print(nam)
+ df_temp <<- get(d) %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, s1) == TRUE) %>% mutate(m = mean(Response)) %>% select(PID, session, m) %>% distinct()
+ if (nrow(df_temp) == 0) return(NULL)
+ assign(nam, df_temp, envir = .GlobalEnv)
+}
+
+fn_var("n_k47v", "hed")
+
+var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
+
+for (i in 1:length(var_names)) {
+df_temp2 <- lapply(dflist, fn_var, s1 = var_names[i] )
+print (nrow(df_temp2) ) 
+}
+
+
+lapply(dflist, fn_var, s1 = "hed")
+ fn_var("n_l8iw", "hed")
+
+
+n_4kh5 %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "cog") == TRUE) %>% mutate(moral_cognition = mean(Response)) %>% select(PID, session, moral_cognition) %>% distinct()
+
+n_4kh5 %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "att") == TRUE) %>% mutate(attitude = mean(Response))
+n_4kh5 %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "pig") == TRUE) %>% mutate(piggybacking = mean(Response))
+
 # Moral cognition
 
 
