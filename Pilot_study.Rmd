@@ -85,6 +85,14 @@ df2$Question <- ordered(df2$Question, levels = c("Familiarity", "Pre-stim", "Pos
 tibble(df1$Response[df1$`Event Index` == 4], df1$Response[df1$`Event Index` == 8]) %>%
   kbl() %>% kable_styling(bootstrap_options = "striped")
 
+# Comments overall
+tibble(df1$Response[df1$`Event Index` == 2]) %>%
+  kbl() %>% kable_styling(bootstrap_options = "striped")
+
+# Comments on understanding
+tibble(df1$Response[df1$`Event Index` == 3]) %>%
+  kbl() %>% kable_styling(bootstrap_options = "striped")
+
 # Plot: Ridge histogram of emotion ranking
 df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>% 
   ggplot( aes(x=`Question Key`,y=Response,  height = stat(count), fill = Response)) +
@@ -160,6 +168,10 @@ df2 %>% filter(is.na(Question) == FALSE) %>%
 
 # Plot
 df2 %>% ggplot(aes(x=Question, y=Response, fill=Issue)) + facet_wrap(df2$Issue) + geom_boxplot() + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
+
+# Calculate mean familiarity scores
+df2 %>% group_by(Question, Issue) %>% summarise (Mean = mean(Response)) %>% unique() 
+
 
 # paired t tests for moralisation score before and after
 
