@@ -54,14 +54,15 @@ df1$Response <- as.factor(df1$Response)
 # Read in data frame 2
 df2 <- read_csv("data_exp_44331-v24_task-4xn8.csv")
 
-# Set up variable types and replace with meaningful names
+# Set up variable types and replace with meaningful/correct names
 df2$Response <- as.numeric(df2$Response)
 df2$`Spreadsheet Row` <- as.character(df2$`Spreadsheet Row`)
 df2$`Spreadsheet Row` <- mgsub(df2$`Spreadsheet Row`, c("1","2","3","4"), c("Meat", "Self-driving cars", "Plastic", "E-waste"))
 df2$`Spreadsheet Row` <- as.factor(df2$`Spreadsheet Row`)
 df2$`Screen Name` <- gsub(" questionnaire", "", df2$`Screen Name`)
-df2$`Screen Name` <- as.factor(df2$`Screen Name`)
 colnames(df2)[colnames(df2)=="Screen Name"] <- "Question"
+df2$Question <- mgsub(df2$Question, "Familiarisation", "Familiarity")
+df2$Question <- as.factor(df2$Question)
 df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
 colnames(df2)[colnames(df2)=="Participant Private ID"] <- "PID"
 
@@ -70,8 +71,11 @@ df2 <- df2 %>%
   filter(`Participant Status` == "complete" & is.na(Response) == FALSE ) %>%
   select(c(`Event Index`, `PID`, `Spreadsheet Row`, Question, `Zone Name`, Response))
 
+# Rename `Spreadsheet Row` column as Issue
+names(df2)[3] <- "Issue"
+
 # Order pre/post factors for graphing
-df2$Question <- ordered(df2$Question, levels = c("Familiarisation", "Pre-stim", "Post-stim"))
+df2$Question <- ordered(df2$Question, levels = c("Familiarity", "Pre-stim", "Post-stim"))
 
 ```
 
@@ -91,29 +95,76 @@ df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>%
     xlab("") +
     ylab("")
 
+
 # Calculate Cronbach's Alpha for pre and post moralisation scores
 
 for (i in c(2, 6, 10, 14, 18, 22, 26, 30)) {
-print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(`Spreadsheet Row`, Question, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
+print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(Issue, Question, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
 }
 
 # Create table of mean composite values for each issue
-df2 %>% group_by(`Spreadsheet Row`, Question) %>%
+df2 %>% group_by(Issue, Question) %>%
   # group by issue and question (familiar/pre/post)
   summarise(Mean = mean(Response), SE = signif(sd(Response) / sqrt(length(Response)),2)) %>%
   # calculate mean and standard error
   kbl() %>% kable_styling() # make table
 
-# Plot
-df2 %>% ggplot(aes(x=Question, y=Response, fill=`Spreadsheet Row`)) + facet_wrap(df2$`Spreadsheet Row`) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
+# Check that dependent variable is normally distributed
 
-# Alternative plot using means comparison not individual question items
-df2 %>% group_by(Question, PID, `Spreadsheet Row`) %>% mutate(m = mean(Response)) %>% select(PID, Question, m, `Spreadsheet Row`) %>% unique()  %>% ggplot(aes(x=`Spreadsheet Row`, y=m, fill=Question)) + geom_boxplot() + ggtitle("Familiarisation and Moralisation scores by issue Pre and Post stimulus") + ylab("Score") + xlab("") + theme(legend.position="bottom") 
+# Visual check - density plot Pre-stimulus
+df2 %>% filter(Question == "Pre-stim") %>%
+  group_by(Issue, PID) %>% 
+  mutate(Mean = mean(Response)) %>%
+  select(PID, Issue, Mean) %>%
+  unique() %>%
+ggplot(aes(x = Mean)) +  stat_density(aes(group = Issue, color = Issue),position="identity",geom="line", size = 2) + facet_wrap(~Issue) + theme_classic() + ggtitle("Pre")
+
+# Visual check - density plot Post-stimulus
+df2 %>% filter(Question == "Post-stim") %>%
+  group_by(Issue, PID) %>% 
+  mutate(Mean = mean(Response)) %>%
+  select(PID, Issue, Mean) %>%
+  unique() %>%
+ggplot(aes(x = Mean)) +  stat_density(aes(group = Issue, color = Issue),position="identity",geom="line", size = 2) + facet_wrap(~Issue) + theme_classic()
+
+# QQ plots
+# Pre-stimulus
+df2 %>% filter(Question == "Pre-stim") %>%
+  group_by(Issue, PID) %>% 
+  mutate(Mean = mean(Response)) %>%
+  ungroup () %>%
+  select(Issue, Mean)  %>%
+  unique() %>% ggplot(aes(sample = Mean)) + geom_qq(shape = 1) +
+  geom_qq_line(colour = "red") + facet_wrap(~Issue)
+
+# Post-stimulus
+df2 %>% filter(Question == "Post-stim") %>%
+  group_by(Issue, PID) %>% 
+  mutate(Mean = mean(Response)) %>%
+  ungroup () %>%
+  select(Issue, Mean)  %>%
+  unique() %>% ggplot(aes(sample = Mean)) + geom_qq(shape = 1) +
+  geom_qq_line(colour = "red") + facet_wrap(~Issue)
+
+# Shapiro-Wilk tests
+df2 %>% filter(is.na(Question) == FALSE) %>%
+  group_by(Question, Issue, PID) %>% 
+  mutate(Mean = mean(Response)) %>%
+  ungroup() %>%
+  select(PID, Question, Issue, Mean) %>%
+  unique() %>%
+  pivot_wider(names_from = c(Question, Issue), values_from = Mean) %>%
+  lapply(., shapiro_test) 
+
+
+
+# Plot
+df2 %>% ggplot(aes(x=Question, y=Response, fill=Issue)) + facet_wrap(df2$Issue) + geom_boxplot() + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
 
 # paired t tests for moralisation score before and after
 
-df2 %>% filter(`Spreadsheet Row` == "Self-driving cars", `Zone Name` != "slider") %>%
-  # select cars issue and ignore slider(familiarisation) questions
+df2 %>% filter(Issue == "Self-driving cars", `Zone Name` != "slider") %>%
+  # select cars issue and ignore slider(familiarity) questions
   group_by(Question, PID) %>% 
   # group by question (pre/post) and participant ID
   mutate(m = mean(Response)) %>%
@@ -126,9 +177,9 @@ df2 %>% filter(`Spreadsheet Row` == "Self-driving cars", `Zone Name` != "slider"
   # perform paired t-test of how mean (m) depends on Questions (pre / post)
 
 # repeat t-test for each issue
-df2 %>% filter(`Spreadsheet Row` == "Meat", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
-df2 %>% filter(`Spreadsheet Row` == "Plastic", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
-df2 %>% filter(`Spreadsheet Row` == "E-waste", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
+df2 %>% filter(Issue == "Meat", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
+df2 %>% filter(Issue == "Plastic", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
+df2 %>% filter(Issue == "E-waste", `Zone Name` != "slider") %>% group_by(Question, PID) %>% mutate(m = mean(Response)) %>% select(Question, m) %>% unique() %>% t.test(m ~ Question, data = ., paired = TRUE)
 
 # Effect sizes
 # Convert Question variable into character to enable use of cohen's d function
@@ -141,8 +192,8 @@ issues <- c("Plastic", "E-waste", "Meat", "Self-driving cars")
 cohen_fn = function(var) {
   data.frame( df2 %>%
                 # create a data frame to produce a tablular output at the end
-                filter(`Spreadsheet Row` == var, `Zone Name` != "slider") %>%
-                # select issue and ignore slider(familiarisation) questions
+                filter(Issue == var, `Zone Name` != "slider") %>%
+                # select issue and ignore slider(familiarity) questions
                 group_by(Question, PID) %>%
                 # group by question (pre/post) and participant ID
                 mutate(m = mean(Response)) %>%
