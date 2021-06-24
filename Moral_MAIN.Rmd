@@ -124,7 +124,7 @@ lapply(dflist, fn_var, s1 = var_names[i] )
 rm(list = dflist)
 rm(df_temp)
 
-#bind all common variables together
+#bind all common variables togethe
 t1 <- rbind(att1, att2, att3, att4)
 t2 <- rbind(behav1, behav2)
 t3 <- rbind(cog1, cog2, cog3, cog4)
