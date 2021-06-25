@@ -62,6 +62,8 @@ df2$`Spreadsheet Row` <- as.factor(df2$`Spreadsheet Row`)
 df2$`Screen Name` <- gsub(" questionnaire", "", df2$`Screen Name`)
 colnames(df2)[colnames(df2)=="Screen Name"] <- "Question"
 df2$Question <- mgsub(df2$Question, "Familiarisation", "Familiarity")
+df2$Question <- mgsub(df2$Question, "Pre-stim", "Moralisation Before")
+df2$Question <- mgsub(df2$Question, "Post-stim", "Moralisation After")
 df2$Question <- as.factor(df2$Question)
 df2$`Zone Name` <- mgsub(df2$`Zone Name`, c("Zone4","Zone6","Zone8","Zone10"), c("core_belief", "right_wrong", "moral_issue", "just_know"))
 colnames(df2)[colnames(df2)=="Participant Private ID"] <- "PID"
@@ -74,8 +76,7 @@ df2 <- df2 %>%
 # Rename `Spreadsheet Row` column as Issue
 names(df2)[3] <- "Issue"
 
-# Order pre/post factors for graphing
-df2$Question <- ordered(df2$Question, levels = c("Familiarity", "Pre-stim", "Post-stim"))
+
 
 ```
 
@@ -103,12 +104,16 @@ df1 %>% filter(`Event Index` > 3 & `Event Index` < 8) %>%
     xlab("") +
     ylab("")
 
+# Order pre/post factors for graphing
+df2$Question <- ordered(df2$Question, levels = c("Familiarity", "Moralisation Before", "Moralisation After"))
+
 
 # Calculate Cronbach's Alpha for pre and post moralisation scores
 
 for (i in c(2, 6, 10, 14, 18, 22, 26, 30)) {
 print(df2 %>% filter(`Zone Name` != "slider") %>% pivot_wider(id_cols = PID, names_from = c(Issue, Question, `Zone Name`), values_from = Response) %>% select(.,i:(i+3)) %>% psych::alpha())
 }
+
 
 # Create table of mean composite values for each issue
 df2 %>% group_by(Issue, Question) %>%
@@ -119,25 +124,25 @@ df2 %>% group_by(Issue, Question) %>%
 
 # Check that dependent variable is normally distributed
 
-# Visual check - density plot Pre-stimulus
-df2 %>% filter(Question == "Pre-stim") %>%
+# Visual check - density plot pre-stimulus
+df2 %>% filter(Question == "Moralisation Before") %>%
   group_by(Issue, PID) %>% 
   mutate(Mean = mean(Response)) %>%
   select(PID, Issue, Mean) %>%
   unique() %>%
-ggplot(aes(x = Mean)) +  stat_density(aes(group = Issue, color = Issue),position="identity",geom="line", size = 2) + facet_wrap(~Issue) + theme_classic() + ggtitle("Pre")
+ggplot(aes(x = Mean)) +  stat_density(aes(group = Issue, color = Issue),position="identity",geom="line", size = 2) + facet_wrap(~Issue) 
 
 # Visual check - density plot Post-stimulus
-df2 %>% filter(Question == "Post-stim") %>%
+df2 %>% filter(Question == "Moralisation After") %>%
   group_by(Issue, PID) %>% 
   mutate(Mean = mean(Response)) %>%
   select(PID, Issue, Mean) %>%
   unique() %>%
-ggplot(aes(x = Mean)) +  stat_density(aes(group = Issue, color = Issue),position="identity",geom="line", size = 2) + facet_wrap(~Issue) + theme_classic()
+ggplot(aes(x = Mean)) +  stat_density(aes(group = Issue, color = Issue),position="identity",geom="line", size = 2) + facet_wrap(~Issue) 
 
 # QQ plots
 # Pre-stimulus
-df2 %>% filter(Question == "Pre-stim") %>%
+df2 %>% filter(Question == "Moralisation Before") %>%
   group_by(Issue, PID) %>% 
   mutate(Mean = mean(Response)) %>%
   ungroup () %>%
@@ -146,7 +151,7 @@ df2 %>% filter(Question == "Pre-stim") %>%
   geom_qq_line(colour = "red") + facet_wrap(~Issue)
 
 # Post-stimulus
-df2 %>% filter(Question == "Post-stim") %>%
+df2 %>% filter(Question == "Moralisation After") %>%
   group_by(Issue, PID) %>% 
   mutate(Mean = mean(Response)) %>%
   ungroup () %>%
@@ -166,8 +171,16 @@ df2 %>% filter(is.na(Question) == FALSE) %>%
 
 
 
-# Plot
-df2 %>% ggplot(aes(x=Question, y=Response, fill=Issue)) + facet_wrap(df2$Issue) + geom_boxplot() + ylab("Moral Score") + xlab("") + geom_jitter(width=0.1,alpha=0.3)
+## MAIN Plot
+
+# insert line breaks into x-axis titles
+df2$Question <- gsub(" ", "\n", df2$Question)
+
+# Order pre/post factors for graphing
+df2$Question <- ordered(df2$Question, levels = c("Familiarity", "Moralisation\nBefore", "Moralisation\nAfter"))
+
+# Make plot
+df2 %>% ggplot(aes(x=Question, y=Response, fill=Issue)) + facet_wrap(df2$Issue) + geom_boxplot() + ylab("Likert rating") + xlab("") + geom_jitter(width=0.1,alpha=0.3) 
 
 # Calculate mean familiarity scores
 df2 %>% group_by(Question, Issue) %>% summarise (Mean = mean(Response)) %>% unique() 
