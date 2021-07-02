@@ -20,28 +20,26 @@ library(tidyverse)
 ```
 
 
-## Import dummy data
-```{r, message=FALSE}
+## Import data
+```{r, message = FALSE, warning=FALSE}
 
 #clear workspace
 rm(list = ls())
 
-setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data") 
+setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN actual data") 
 
-# Find files and create list of them
-files <- list.files(pattern = "questionnaire")
+# extract 4 character identifier for each questionnaire node
+nam <- str_sub(list.files(pattern = "questionnaire"), -8, -5)
 
-# Create individual dataframe for each questionnaire node
-for(i in seq(1, length(files), 5)) { #set up for loop in increments of 5 there are 5 dummy ppts
-  nam <- paste("n_", substring(files[i], 20, 23), sep = "") #create a name for each question matching Gorilla node name
-  #create dataframe called df within the loop which binds the 5 sequential participant files together
-    df_temp <- rbind(read_csv(files[i]), read_csv(files[i+1]),  read_csv(files[i+2]),read_csv(files[i+3]),read_csv(files[i+4]))
+# combine all matching nodes
+for (i in seq(1:length(nam))) {
+  df_temp <- list.files(pattern = nam[i]) %>% lapply(read_csv) %>% bind_rows()
     df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") %>%
     filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
            !grepl("quantised", `Question Key`) ) %>%
   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
     colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID"
-    assign(nam, df_temp) #assign df to the name of the dataframe created above
+    assign(paste0("n_",nam[i]), df_temp) #assign df to the name of the dataframe created above
 }
 
 #remove df_temp from workspace to prevent double counting
@@ -100,15 +98,25 @@ n_xuky$session <- 4
 n_zd7j$session <- 2
 n_zm3i$session <- 4
 
-## Calculate mean scores for variables within individal dataframes (one variable / dataframe)
+## Calculate mean scores for variables within individual dataframes (one variable / dataframe)
 
 # create list of variable names to search for
 var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
 
+# Cronbach alpha to check reliability of scales by session
+
+# Create data frame where each column is a test/questionnaire item, each row is a person
+df_all <- bind_rows(Filter(function(x) is(x, "data.frame"), mget(ls())))
+df_all <- df_all %>% group_by(`PID`) %>% pivot_wider(id_cols = PID, names_from = c(`Question Key`, session), values_from = Response) %>% ungroup () 
+
+# Run Cronbach alpha on each questionnaire (first line example)
+psych::alpha(df_all[,2:9])
+
+# NEED TO FINISH THESE OFF !!
+
 # Create function to calculate variable scores
 fn_var <- function(d, s1) {
  nam <- paste0(s1, get(d)[1,5]) #create dataframe name from input dataframe and variable string
- print(nam)
  #filter and mutate to create new dataframe by looking for the string s1 in Question Key column
  df_temp <<- get(d) %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, s1) == TRUE) %>% mutate("{s1}" := mean(Response)) %>% select(PID, session, {s1}) %>% distinct()
  if (nrow(df_temp) == 0) return(NULL) #if no data in dataframe (ie. string s1 doesn't exist in this dataframe) then end function
@@ -124,7 +132,7 @@ lapply(dflist, fn_var, s1 = var_names[i] )
 rm(list = dflist)
 rm(df_temp)
 
-#bind all common variables togethe
+#bind all common variables together
 t1 <- rbind(att1, att2, att3, att4)
 t2 <- rbind(behav1, behav2)
 t3 <- rbind(cog1, cog2, cog3, cog4)
@@ -136,7 +144,10 @@ t8 <- rbind(moral1, moral2, moral3, moral4)
 t9 <- rbind(pig1, pig2, pig3, pig4)
 
 # create final dataframe by column binding t1-t9 matching by participant ID and session number
-df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, HPRS1), by=c("PID", "session"), type='left')
+df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, HPRS1), by=c("PID", "session"), type='left') %>% ungroup()
+
+# Standardise all variables
+df[,3:13] <- scale(df[,3:13])
 
 # have a nice cup of tea and a biscuit
 
@@ -147,7 +158,7 @@ df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, HPRS1), by=c
 
 # Reliability - Cronbach alpha
 
-df %>% group_by(`Participant Private ID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(alpha = psych::alpha(Response))
+df %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(alpha = psych::alpha(Response))
 
 # Normality (Shapiro/QQ)
 
