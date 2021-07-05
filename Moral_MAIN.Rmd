@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(kableExtra)
 library(psych)
+library(car)
 library(tidyverse)
 
 
@@ -93,7 +94,7 @@ n_ubog$session <- 1
 n_vacc$session <- 3
 n_wkz6$session <- 4
 n_wxzl$session <- 3
-n_xdo3$session <- 2
+n_xdo3$session <- 4
 n_xuky$session <- 4
 n_zd7j$session <- 2
 n_zm3i$session <- 4
@@ -109,10 +110,87 @@ var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_
 df_all <- bind_rows(Filter(function(x) is(x, "data.frame"), mget(ls())))
 df_all <- df_all %>% group_by(`PID`) %>% pivot_wider(id_cols = PID, names_from = c(`Question Key`, session), values_from = Response) %>% ungroup () 
 
-# Run Cronbach alpha on each questionnaire (first line example)
-psych::alpha(df_all[,2:9])
+# list of variables at all 4 time points
+var_names4 <- c("cog", "att", "pig", "hed", "moral", "diss", "emo", "emo_obj")
 
-# NEED TO FINISH THESE OFF !!
+# Run Cronbach alpha on each questionnaire - detect using regex
+
+# Moral cognition 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?1$")])
+# Moral cognition 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?2$")])
+# Moral cognition 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?3$")])
+# Moral cognition 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?4$")])
+# Attitude 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?1$")])
+# Attitude 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?2$")])
+# Attitude 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?3$")])
+# Attitude 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?4$")])
+# Moral piggybacking 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?1$")])
+# Moral piggybacking 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?2$")])
+# Moral piggybacking 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?3$")])
+# Moral piggybacking 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?4$")])
+# Hedonic motivation 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?1$")])
+# Hedonic motivation 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?2$")])
+# Hedonic motivation 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?3$")])
+# Hedonic motivation 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?4$")])
+# Moralisation 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?1$")])
+# Moralisation 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?2$")])
+# Moralisation 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?3$")])
+# Moralisation 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?4$")])
+# Dissonance Reduction 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?1$")])
+# Dissonance Reduction 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?2$")])
+# Dissonance Reduction 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?3$")])
+# Dissonance Reduction 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?4$")])
+# Moral emotions 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?1$")])
+# Moral emotions 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?2$")])
+# Moral emotions 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?3$")])
+# Moral emotions 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?4$")])
+# Moral emotions (objects) 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?1$")])
+# Moral emotions (objects) 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?2$")])
+# Moral emotions (objects) 3
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?3$")])
+# Moral emotions (objects) 4
+psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?4$")])
+
+# HPRS
+psych::alpha(df_all[,str_detect(colnames(df_all), "HPRS")])
+# MIS
+psych::alpha(df_all[,str_detect(colnames(df_all), "MIS")])
+
+# Behavioural intentions 1
+psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?1$")])
+# Behavioural intentions 2
+psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?2$")])
+
+
 
 # Create function to calculate variable scores
 fn_var <- function(d, s1) {
@@ -156,33 +234,17 @@ df[,3:13] <- scale(df[,3:13])
 ## Assumption checks
 ```{r}
 
-# Reliability - Cronbach alpha
+# Normality: Shapiro-Wilk test
+lapply(df, shapiro.test)
 
-df %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, "diss") == TRUE) %>% mutate(alpha = psych::alpha(Response))
-
-# Normality (Shapiro/QQ)
-
-
-
-
-
-# Unifactorial scales - HPRS/MIS
-
-# 
+# Normality QQ plots
+qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " "))
+#par(mfrow = c(1, 2))
+mapply(qq_fn, df, labels)
 
 
 ```
 
-setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN study dummy data") 
 
-#create list of dataframes
-dflist <- Filter(function(x) is.data.frame(get(x)), ls())
-
-# Generic tidy up - remove beginning/end and quantised data lines, select only relevant columns
-for (i in 1:length(dflist)) {
-df_temp <- get(dflist[i]) %>% filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE", !grepl("quantised", get(dflist[i])$`Question Key`)  ) %>% select(`Participant Private ID`, `Question Key`, Response) 
-rm()
-# Add new data frame from this file to overall data frame
-  if (i == 1) {df <- df_temp} else {df <- rbind(df, df_temp)}
 
 
