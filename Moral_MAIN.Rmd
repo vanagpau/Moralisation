@@ -16,6 +16,7 @@ library(kableExtra)
 library(psych)
 library(car)
 library(RColorBrewer)
+library(lme4)
 library(tidyverse)
 
 
@@ -277,4 +278,63 @@ lapply(var_names4, spag_plot)
 
 ```
 
+## Hypothesis testing
+```{r}
 
+# HYPOTHESIS 1: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted by moral emotions and moral piggybacking as measured by positive bi-variate correlation > 0.3.
+
+# Calculate change in moralisation
+delta_moral <- (df %>% filter(session == 4) %>% transmute(m = mean(moral)) %>% unique()) %>% pull() - 
+  (df %>% filter(session == 1) %>% transmute(m = mean(moral)) %>% unique() %>% pull())
+
+# Add mean per session to dataframe
+df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>% ungroup()
+df <- df %>% group_by(PID, session) %>% mutate(sess_pig_mean = mean(pig)) %>% ungroup()
+df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% ungroup()
+
+# Correlation of change in moralisation versus change in moral piggybacking
+cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_pig_mean) - df %>% filter(session ==1) %>% select(sess_pig_mean)))
+
+# Correlation of change in moralisation versus change in moral emotions
+cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_emo_mean) - df %>% filter(session ==1) %>% select(sess_emo_mean)))
+
+# HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
+
+# Calculate change in moralisation session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, sess_moral_mean), df %>%
+        filter(session == 1) %>% select(PID, sess_moral_mean), by = "PID") %>%
+        mutate(moral_41 = sess_moral_mean.x - sess_moral_mean.y) %>% 
+        select(PID, moral_41) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral piggybacking session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, sess_pig_mean), df %>%
+        filter(session == 1) %>% select(PID, sess_pig_mean), by = "PID") %>%
+        mutate(pig_41 = sess_pig_mean.x - sess_pig_mean.y) %>% 
+        select(PID, pig_41) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral emotions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
+        filter(session == 1) %>% select(PID, sess_emo_mean), by = "PID") %>%
+        mutate(emo_41 = sess_emo_mean.x - sess_emo_mean.y) %>% 
+        select(PID, emo_41) %>%
+        merge(., df, by = "PID")
+
+
+# linear regression model
+m1 <- lm(moral_41 ~ pig_41 + emo_41, data = df)
+summary(m1)
+
+# Create linear model using filtered df
+m2 <- lmer(moral ~ session + (session|PID), data = df)
+summary(m2)
+
+m3 <- lmer(moral ~ session + emo + (session|PID), data = df)
+summary(m3)
+
+m4 <- lmer(moral ~ session + emo + pig + (session|PID), data = df)
+summary(m4)
+
+
+```
