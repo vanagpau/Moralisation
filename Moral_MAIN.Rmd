@@ -71,6 +71,9 @@ n_wxzl$Response <- str_replace_all(n_wxzl$Response, c(
     "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
   as.numeric()
 
+# Convert PID to factor from numeric
+df$PID <- as.factor(df$PID)
+
 # Reverse score item MIS4
 n_ubog[n_ubog$`Question Key` == "MIS4",'Response'] <- n_ubog %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
 
@@ -256,8 +259,20 @@ df %>% select(PID, session, var_names4) %>%
   group_by(session, variable) %>% transmute(value = mean(value)) %>% unique() %>%
   ggplot(aes(x = session, y = value)) + geom_point(aes(color = variable), size = 3) +
   geom_line(aes(color = variable), size = 1.3) +
-  scale_color_brewer(palette = "Set1") + theme_bw()
+  scale_color_brewer(palette = "Spectral") + theme_bw()
 
+# Plot of each variable by participant
+
+# create function
+spag_plot <- function(x) {
+  df %>% select(PID, session, x) %>% 
+  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>% 
+  group_by(PID, session) %>% transmute(value = mean(value)) %>%
+  ggplot(aes(x = session, y = value, group = PID)) + geom_point(size = 3) +
+  geom_line(aes(linetype = PID), size = 1.3) + theme_bw() 
+}
+
+lapply(var_names4, spag_plot)
 
 
 ```
