@@ -364,6 +364,54 @@ summary(m4)
 ## Exploratory Analyses
 ```{r}
 
+# Influence of MIS on moralisation
+working.data <- df %>% filter(session == 1 | session == 4)
+
+m2 <- lmer(moral ~ MIS + (session|PID), data = working.data)
+summary(m2)
+
+
+
+# Influence of HPRS on moralisation and relationship to dissonance reduction
+
+
+# Effects on behavioural intentions of all variables (correlation matrix)
+
+
+# CROSS-LAGGED PANEL ANALYSIS
+
+# make dataframe into wide format
+
+df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
+
+
+## extract data to work with -- m = moralization, e = meat emotions ##
+working.data <- df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'e1', 'e2', 'e3', 'e4')
+
+names(working.data)
+
+
+cross.second <- '
+m2 ~ m1 + b1*e1
+m3 ~ m2 + b2*e2 + m1
+m4 ~ m3 + b3*e3 + m2
+
+e2 ~ e1 + b4*m1
+e3 ~ e2 + b5*m2 + e1
+e4 ~ e3 + b6*m3 + e2
+
+m1 ~~ e1
+m2 ~~ e2
+m3 ~~ e3
+m4 ~~ e4
+
+bb14 := b1-b4
+bb25 := b2-b5
+bb36 := b3-b6'
+
+cross.second.fit <- lavaan(cross.second, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.second.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
 
 
 ```
