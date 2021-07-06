@@ -322,9 +322,29 @@ df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
         merge(., df, by = "PID")
 
 
-# linear regression model
+# Simple linear regression model
 m1 <- lm(moral_41 ~ pig_41 + emo_41, data = df)
 summary(m1)
+
+# Modelling effect of time
+m2 <- lm(moral ~ session, df)
+summary(m2)
+plot(m2)
+
+m3 <- lm(moral ~ session + emo, df)
+summary(m3)
+plot(m3)
+
+m4 <- lm(moral ~ session + emo + pig, df)
+summary(m4)
+plot(m4)
+
+m5 <- lm(moral ~ session + emo + att, df)
+summary(m5)
+plot(m5)
+
+
+# MIXED MODELS
 
 # Create linear model using filtered df
 m2 <- lmer(moral ~ session + (session|PID), data = df)
@@ -333,8 +353,18 @@ summary(m2)
 m3 <- lmer(moral ~ session + emo + (session|PID), data = df)
 summary(m3)
 
-m4 <- lmer(moral ~ session + emo + pig + (session|PID), data = df)
+# this model has singularity issue:
+m4 <- lmer(moral ~ session + pig + (session|PID), data = df)
 summary(m4)
 
 
+
 ```
+
+## Exploratory Analyses
+```{r}
+
+
+
+```
+
