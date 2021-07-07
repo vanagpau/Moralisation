@@ -19,6 +19,7 @@ library(RColorBrewer)
 library(lme4)
 library(lattice)
 library(faux)
+library(simr)
 library(tidyverse)
 
 
@@ -253,20 +254,19 @@ for (i in 1:length(var_names4)) {
   if (i == 1) {df_sim <- df_temp} else {df_sim <- merge(df_sim, df_temp, by = c("PID", "session"))}
 }
 
-df_sim$PID <- as.numeric(df_sim$PID)
+df_sim$PID <- as.factor(df_sim$PID)
 df_sim$session <- as.numeric(df_sim$session)
 
 m_sim_null <- lmer(moral ~ session|PID, data = df_sim)
 m_sim <- lmer(moral ~ pig + (session|PID), data = df_sim)
 
-library(simr)
-library(mixedpower)
-
-mixedpower(m_sim, data = df_sim, fixed_effects = c("pig"), simvar = "PID", n_sim = 100, steps = c(85, 400, 1000), critical_value = 2)
 
 
-# simr::powerSim(fit = m_sim, nsim = 100)
-# 
+fixef(m_sim)
+fixef(m_sim)["pig"] <- 0.2
+
+powerSim(fit = m_sim, nsim = 100)
+ 
 # simr::powerSim(fit = m_sim, test = compare(m_sim_null, method = "lr"), nsim = 100)
 
 ```
