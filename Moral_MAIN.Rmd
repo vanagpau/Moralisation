@@ -18,6 +18,7 @@ library(car)
 library(RColorBrewer)
 library(lme4)
 library(lattice)
+library(faux)
 library(tidyverse)
 
 
@@ -120,80 +121,82 @@ var_names4 <- c("cog", "att", "pig", "hed", "moral", "diss", "emo", "emo_obj")
 
 # Run Cronbach alpha on each questionnaire - detect using regex
 
-# Moral cognition 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?1$")])
-# Moral cognition 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?2$")])
-# Moral cognition 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?3$")])
-# Moral cognition 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?4$")])
-# Attitude 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?1$")])
-# Attitude 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?2$")])
-# Attitude 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?3$")])
-# Attitude 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?4$")])
-# Moral piggybacking 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?1$")])
-# Moral piggybacking 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?2$")])
-# Moral piggybacking 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?3$")])
-# Moral piggybacking 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?4$")])
-# Hedonic motivation 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?1$")])
-# Hedonic motivation 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?2$")])
-# Hedonic motivation 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?3$")])
-# Hedonic motivation 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?4$")])
-# Moralisation 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?1$")])
-# Moralisation 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?2$")])
-# Moralisation 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?3$")])
-# Moralisation 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?4$")])
-# Dissonance Reduction 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?1$")])
-# Dissonance Reduction 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?2$")])
-# Dissonance Reduction 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?3$")])
-# Dissonance Reduction 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?4$")])
-# Moral emotions 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?1$")])
-# Moral emotions 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?2$")])
-# Moral emotions 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?3$")])
-# Moral emotions 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?4$")])
-# Moral emotions (objects) 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?1$")])
-# Moral emotions (objects) 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?2$")])
-# Moral emotions (objects) 3
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?3$")])
-# Moral emotions (objects) 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?4$")])
+# HASHED OUT FOR SPEED
 
-# HPRS
-psych::alpha(df_all[,str_detect(colnames(df_all), "HPRS")])
-# MIS
-psych::alpha(df_all[,str_detect(colnames(df_all), "MIS")])
-
-# Behavioural intentions 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?1$")])
-# Behavioural intentions 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?4$")])
+# # Moral cognition 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?1$")])
+# # Moral cognition 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?2$")])
+# # Moral cognition 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?3$")])
+# # Moral cognition 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?4$")])
+# # Attitude 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?1$")])
+# # Attitude 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?2$")])
+# # Attitude 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?3$")])
+# # Attitude 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?4$")])
+# # Moral piggybacking 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?1$")])
+# # Moral piggybacking 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?2$")])
+# # Moral piggybacking 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?3$")])
+# # Moral piggybacking 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?4$")])
+# # Hedonic motivation 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?1$")])
+# # Hedonic motivation 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?2$")])
+# # Hedonic motivation 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?3$")])
+# # Hedonic motivation 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?4$")])
+# # Moralisation 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?1$")])
+# # Moralisation 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?2$")])
+# # Moralisation 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?3$")])
+# # Moralisation 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?4$")])
+# # Dissonance Reduction 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?1$")])
+# # Dissonance Reduction 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?2$")])
+# # Dissonance Reduction 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?3$")])
+# # Dissonance Reduction 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?4$")])
+# # Moral emotions 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?1$")])
+# # Moral emotions 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?2$")])
+# # Moral emotions 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?3$")])
+# # Moral emotions 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?4$")])
+# # Moral emotions (objects) 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?1$")])
+# # Moral emotions (objects) 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?2$")])
+# # Moral emotions (objects) 3
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?3$")])
+# # Moral emotions (objects) 4
+# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?4$")])
+# 
+# # HPRS
+# psych::alpha(df_all[,str_detect(colnames(df_all), "HPRS")])
+# # MIS
+# psych::alpha(df_all[,str_detect(colnames(df_all), "MIS")])
+# 
+# # Behavioural intentions 1
+# psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?1$")])
+# # Behavioural intentions 2
+# psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?4$")])
 
 
 
@@ -238,6 +241,29 @@ df$PID <- as.factor(df$PID)
 # have a nice cup of tea and a biscuit
 
 ```
+
+## Power calculation
+```{r}
+
+# simulate dataset based on 8 participants data to 1,000 ppts
+  
+for (i in 1:length(var_names4)) {
+  df_temp <- sim_df(df, n = 1000, id ="PID", within = "session", dv = var_names4[i]) %>% pivot_longer(2:5, names_to = "session", values_to = var_names4[i])
+  # Add new data frame from this file to overall data frame
+  if (i == 1) {df_sim <- df_temp} else {df_sim <- merge(df_sim, df_temp, by = c("PID", "session"))}
+}
+
+df_sim$PID <- as.factor(df_sim$PID)
+df_sim$session <- as.numeric(df_sim$session)
+
+m_sim <- lmer(moral ~ pig + emo + att + (1 + session|PID), data = df_sim)
+
+
+```
+
+
+
+
 
 ## Assumption checks
 ```{r}
@@ -354,6 +380,8 @@ plot(m5)
 
 
 # MIXED MODELS
+
+# NOTE: to to do the mixed models accurately session should be converted to a continuous time variable
 
 # Null model
 m1 <- lmer(moral ~ session|PID, data = df)
