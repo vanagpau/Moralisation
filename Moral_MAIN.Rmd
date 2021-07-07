@@ -32,7 +32,11 @@ library(tidyverse)
 #clear workspace
 rm(list = ls())
 
-setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN actual data") 
+#laptop working directory
+
+setwd("/home/vanagpau/R/Moralisation/MAIN actual data") 
+#desktop working directory
+#setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/MAIN actual data") 
 
 # extract 4 character identifier for each questionnaire node
 nam <- str_sub(list.files(pattern = "questionnaire"), -8, -5)
@@ -257,13 +261,11 @@ for (i in 1:length(var_names4)) {
 df_sim$PID <- as.factor(df_sim$PID)
 df_sim$session <- as.numeric(df_sim$session)
 
-m_sim_null <- lmer(moral ~ session|PID, data = df_sim)
-m_sim <- lmer(moral ~ pig + (session|PID), data = df_sim)
+m_sim <- lmer(moral ~ session + (session|PID), data = df_sim)
 
-
-
-fixef(m_sim)
 fixef(m_sim)["pig"] <- 0.2
+fixef(m_sim)["emo"] <- 0.2
+fixef(m_sim)["att"] <- 0.2
 
 powerSim(fit = m_sim, nsim = 100)
  
