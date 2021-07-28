@@ -43,27 +43,35 @@ nam <- str_sub(list.files(pattern = "questionnaire"), -8, -5)
 
 # combine all matching nodes
 for (i in seq(1:length(nam))) {
+  #read in each file, remove additional event as per text and combine all common questionnaire nodes
   df_temp <- list.files(pattern = nam[i]) %>% lapply(read_csv, na = c("Unexpectedly long close out at end of task!", "NA")) %>% bind_rows()
     df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") %>%
     filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
            !grepl("quantised", `Question Key`) ) %>%
   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
-    colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID"
+    colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID" #shorten col name to PID
     assign(paste0("n_",nam[i]), df_temp) #assign df to the name of the dataframe created above
 }
 
+#remove unnecessary dfs from environment (consent, debrief nodes, explainer, survey code pages etc)
+rm(n_1dbi,n_o3u2, n_q986, n_1dbi, n_8941, n_gbx3)
+
 #remove df_temp from workspace to prevent double counting
 rm(df_temp)
+
+#create list of remaining dataframes (as strings)
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+
+#INCOMPLETE CODE
+#create list of remaining dataframe (as objects)
+#lapply(ls(pattern="n_"), function(x) get(x))
+#save to csv for quick recall in subsequent chunk
+#lapply(dflist, write_csv, file = paste0(dflist,".csv"))
 
 ```
 ## Data wrangle
 ```{r}
 
-#remove unnecessary dfs from environment (consent, debrief nodes, explainer, survey code pages etc)
-rm(n_1dbi,n_o3u2, n_q986, n_1dbi, n_8941, n_gbx3)
-
-#create list of remaining dataframes
-dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 # replace categorical answers with numeric
 n_4kh5$Response <- str_replace_all(n_4kh5$Response, c(
@@ -243,12 +251,17 @@ df[,3:13] <- scale(df[,3:13])
 # Convert PID to factor from numeric
 df$PID <- as.factor(df$PID)
 
+# Remove any participants without complete data
+complete <- df %>% select(PID, session) %>% pivot_wider(names_from = session, values_from = session) %>% na.omit() %>% select(PID) %>% pull()
+
+df <- df %>% filter(PID %in% complete)
+
 # have a nice cup of tea and a biscuit
 
 ```
 
 ## Power calculation
-```{r}
+```{r, eval=FALSE, include=FALSE}
 
 # simulate dataset based on 8 participants data to 1,000 ppts
   
@@ -320,7 +333,7 @@ lapply(var_names4, spag_plot)
 xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"))
 
 # Interaction plot
-interaction.plot(df$session, df$PID, df$moral)
+interaction.plot(df$session, df$PID, df$moral, legend = FALSE)
 
 
 ```
@@ -339,8 +352,11 @@ df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>
 df <- df %>% group_by(PID, session) %>% mutate(sess_pig_mean = mean(pig)) %>% ungroup()
 df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% ungroup()
 
+#show in dataframe
+df %>% select(PID, session,sess_moral_mean, sess_pig_mean, sess_emo_mean)
+
 # Correlation of change in moralisation versus change in moral piggybacking
-cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_pig_mean) - df %>% filter(session ==1) %>% select(sess_pig_mean)))
+cor.test (pull(df %>% filter(session == 4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_pig_mean) - df %>% filter(session ==1) %>% select(sess_pig_mean)))
 
 # Correlation of change in moralisation versus change in moral emotions
 cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_emo_mean) - df %>% filter(session ==1) %>% select(sess_emo_mean)))
@@ -368,6 +384,10 @@ df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
         select(PID, emo_41) %>%
         merge(., df, by = "PID")
 
+```
+
+# Exploratory analyses I - multi-variate and mixed models
+```{r}
 
 # Simple linear regression model
 m1 <- lm(moral_41 ~ pig_41 + emo_41, data = df)
@@ -420,7 +440,7 @@ summary(m4)
 
 ```
 
-## Exploratory Analyses
+## Exploratory Analyses II - mediating variables
 ```{r}
 
 # Influence of MIS on moralisation
@@ -435,10 +455,11 @@ summary(m2)
 
 
 # Effects on behavioural intentions of all variables (correlation matrix)
+```
 
 
 # CROSS-LAGGED PANEL ANALYSIS
-
+```{r}
 # make dataframe into wide format
 
 df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
