@@ -132,7 +132,7 @@ df_all <- df_all %>% group_by(`PID`) %>% pivot_wider(id_cols = PID, names_from =
 # list of variables at all 4 time points
 var_names4 <- c("cog", "att", "pig", "hed", "moral", "diss", "emo", "emo_obj")
 
-# Run Cronbach alpha on each questionnaire - detect using regex
+# Run Cronbach alpha on each questionnaire - detected using regex string matching
 
 # HASHED OUT FOR SPEED
 
@@ -307,6 +307,9 @@ mapply(qq_fn, df, labels)
 ## Data visualisation
 ```{r}
 
+# Scatter plots e.g. moral piggybacking vs moralisation at time 1, moral piggybacking vs moralisation at time 4 etc
+# DO THESE
+
 # Plot of key variables grand mean over each time point
 
 df %>% select(PID, session, var_names4) %>% 
@@ -343,11 +346,11 @@ interaction.plot(df$session, df$PID, df$moral, legend = FALSE)
 
 # HYPOTHESIS 1: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted by moral emotions and moral piggybacking as measured by positive bi-variate correlation > 0.3.
 
-# Calculate change in moralisation
-delta_moral <- (df %>% filter(session == 4) %>% transmute(m = mean(moral)) %>% unique()) %>% pull() - 
+# Calculate overall change in moralisation across whole sample at session 4 from session 1
+(df %>% filter(session == 4) %>% transmute(m = mean(moral)) %>% unique()) %>% pull() - 
   (df %>% filter(session == 1) %>% transmute(m = mean(moral)) %>% unique() %>% pull())
 
-# Add mean per session to dataframe
+# Add mean of each variable measure per participant per session to dataframe
 df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>% ungroup()
 df <- df %>% group_by(PID, session) %>% mutate(sess_pig_mean = mean(pig)) %>% ungroup()
 df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% ungroup()
@@ -363,35 +366,32 @@ cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% f
 
 # HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
 
-# Calculate change in moralisation session 4 - session 1 per participant and add to dataframe
+# Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
 df <- merge(df %>% filter(session == 4) %>% select(PID, sess_moral_mean), df %>%
         filter(session == 1) %>% select(PID, sess_moral_mean), by = "PID") %>%
-        mutate(moral_41 = sess_moral_mean.x - sess_moral_mean.y) %>% 
-        select(PID, moral_41) %>%
+        mutate(moral_delta = sess_moral_mean.x - sess_moral_mean.y) %>% 
+        select(PID, moral_delta) %>%
         merge(., df, by = "PID")
 
 # Calculate change in moral piggybacking session 4 - session 1 per participant and add to dataframe
 df <- merge(df %>% filter(session == 4) %>% select(PID, sess_pig_mean), df %>%
         filter(session == 1) %>% select(PID, sess_pig_mean), by = "PID") %>%
-        mutate(pig_41 = sess_pig_mean.x - sess_pig_mean.y) %>% 
-        select(PID, pig_41) %>%
+        mutate(pig_delta = sess_pig_mean.x - sess_pig_mean.y) %>% 
+        select(PID, pig_delta) %>%
         merge(., df, by = "PID")
 
 # Calculate change in moral emotions session 4 - session 1 per participant and add to dataframe
 df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
         filter(session == 1) %>% select(PID, sess_emo_mean), by = "PID") %>%
-        mutate(emo_41 = sess_emo_mean.x - sess_emo_mean.y) %>% 
-        select(PID, emo_41) %>%
+        mutate(emo_delta = sess_emo_mean.x - sess_emo_mean.y) %>% 
+        select(PID, emo_delta) %>%
         merge(., df, by = "PID")
 
-```
-
-# Exploratory analyses I - multi-variate and mixed models
-```{r}
-
 # Simple linear regression model
-m1 <- lm(moral_41 ~ pig_41 + emo_41, data = df)
+m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
 summary(m1)
+plot(m1)
+performance::check_model(m1)
 
 # Modelling effect of time
 m2 <- lm(moral ~ session, df)
@@ -406,9 +406,22 @@ m4 <- lm(moral ~ session + emo + pig, df)
 summary(m4)
 plot(m4)
 
+# Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better
+
 m5 <- lm(moral ~ session + emo + att, df)
 summary(m5)
 plot(m5)
+
+m5 <- lm(moral ~ session + emo + att + pig, df)
+summary(m5)
+plot(m5)
+
+```
+
+# Exploratory analyses I - multi-variate and mixed models
+```{r}
+
+
 
 
 # MIXED MODELS
