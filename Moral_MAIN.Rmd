@@ -293,8 +293,21 @@ powerSim(fit = m_sim, nsim = 100)
 ## Assumption checks
 ```{r}
 
-# Normality: Shapiro-Wilk test
-lapply(df, shapiro.test)
+# plots of variables by session
+
+
+# Normality: Shapiro-Wilk test (note: test has limit of 5,000 samples so dataframe has to be done in parts)
+
+
+for (i in 1:4) {
+for (j in 1:length(var_names4)) {
+  print(paste0("Session number ",i,", variable  ",var_names4[j]))
+tmp <- shapiro.test(df[df$session == i,var_names4[j]])
+if (tmp$p.value < .05) print(shapiro.test(df[,var_names4[j]]))
+else print("NORMAL")}
+}
+
+
 
 # Normality QQ plots
 qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " "))
@@ -387,11 +400,25 @@ df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
         select(PID, emo_delta) %>%
         merge(., df, by = "PID")
 
-# Simple linear regression model
+# Simple linear regression model shows significant effects for both Moral Emotions and Moral Piggybacking
 m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
 summary(m1)
 plot(m1)
 performance::check_model(m1)
+
+
+
+
+
+
+
+
+
+```
+
+# Exploratory analyses I - multi-variate and mixed models
+```{r}
+
 
 # Modelling effect of time
 m2 <- lm(moral ~ session, df)
@@ -415,14 +442,6 @@ plot(m5)
 m5 <- lm(moral ~ session + emo + att + pig, df)
 summary(m5)
 plot(m5)
-
-```
-
-# Exploratory analyses I - multi-variate and mixed models
-```{r}
-
-
-
 
 # MIXED MODELS
 
