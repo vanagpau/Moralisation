@@ -352,6 +352,7 @@ mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MI
 
 # create scatter plot function
 #df %>% ggplot(aes(x = att, y = moral)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)
+
 scat <- function (x, y) {df %>% 
     ggplot(aes_string(x = x, y = y)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)}
 
@@ -416,8 +417,8 @@ xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3
 # HYPOTHESIS 1: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted by moral emotions and moral piggybacking as measured by positive bi-variate correlation > 0.3.
 
 # Calculate overall change in moralisation across whole sample at session 4 from session 1
-(df %>% filter(session == 4) %>% transmute(m = mean(moral)) %>% unique()) %>% pull() - 
-  (df %>% filter(session == 1) %>% transmute(m = mean(moral)) %>% unique() %>% pull())
+# (df %>% filter(session == 4) %>% transmute(m = mean(moral)) %>% unique()) %>% pull() - 
+#   (df %>% filter(session == 1) %>% transmute(m = mean(moral)) %>% unique() %>% pull())
 
 # Add mean of each variable measure per participant per session to dataframe
 df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>% ungroup()
@@ -426,14 +427,6 @@ df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% un
 
 #show in dataframe
 df %>% select(PID, session,sess_moral_mean, sess_pig_mean, sess_emo_mean)
-
-# Correlation of change in moralisation versus change in moral piggybacking
-cor.test (pull(df %>% filter(session == 4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_pig_mean) - df %>% filter(session ==1) %>% select(sess_pig_mean)))
-
-# Correlation of change in moralisation versus change in moral emotions
-cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_emo_mean) - df %>% filter(session ==1) %>% select(sess_emo_mean)))
-
-# HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
 
 # Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
 df <- merge(df %>% filter(session == 4) %>% select(PID, sess_moral_mean), df %>%
@@ -455,6 +448,20 @@ df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
         mutate(emo_delta = sess_emo_mean.x - sess_emo_mean.y) %>% 
         select(PID, emo_delta) %>%
         merge(., df, by = "PID")
+
+# Scatter plots
+df %>% ggplot(aes(x = emo_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+
+# Correlation of change in moralisation versus change in moral piggybacking
+cor.test (pull(df %>% filter(session == 4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_pig_mean) - df %>% filter(session ==1) %>% select(sess_pig_mean)))
+
+# Correlation of change in moralisation versus change in moral emotions
+cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_emo_mean) - df %>% filter(session ==1) %>% select(sess_emo_mean)))
+
+# HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
+
+
 
 # Simple linear regression model shows significant effects for both Moral Emotions and Moral Piggybacking
 m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
