@@ -27,7 +27,7 @@ library(tidyverse)
 
 
 ## Import data
-```{r, message = FALSE, warning=FALSE, message=FALSE}
+```{r, message = FALSE, warning=FALSE}
 
 #clear workspace
 rm(list = ls())
@@ -296,23 +296,28 @@ powerSim(fit = m_sim, nsim = 100)
 # plots of variables by session
 
 
-# Normality: Shapiro-Wilk test (note: test has limit of 5,000 samples so dataframe has to be done in parts)
-
+# Normality: Shaipro-Wilk test per variable mean per session
 
 for (i in 1:4) {
 for (j in 1:length(var_names4)) {
   print(paste0("Session number ",i,", variable  ",var_names4[j]))
-tmp <- shapiro.test(df[df$session == i,var_names4[j]])
-if (tmp$p.value < .05) print(shapiro.test(df[,var_names4[j]]))
+tmp <- shapiro.test(pull(df[df$session == i,var_names4[j]]))
+if (tmp$p.value < .05) print(shapiro.test(pull(df[,var_names4[j]])))
 else print("NORMAL")}
 }
 
 
+# Normality QQ plots as above
 
-# Normality QQ plots
-qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " "))
-#par(mfrow = c(1, 2))
-mapply(qq_fn, df, labels)
+qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
+
+for (i in 1:4) {
+mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
+}
+
+
+
+
 
 
 ```
