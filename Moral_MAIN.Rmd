@@ -305,18 +305,10 @@ tmp <- shapiro.test(pull(df[df$session == i,var_names4[j]]))
 print(paste0("Session number ",i,", variable  ",var_names4[j]))
 if (tmp$p.value < .05) {print(tmp)
   print(ggplot(df[df$session == i,var_names4[j]], aes(x=get(var_names4[j]))) +
-        geom_histogram(binwidth = .5) + ggtitle(paste0("Session ",i)) +
+        geom_histogram(binwidth = .3) + ggtitle(paste0("Session ",i)) +
   xlab(var_names4[j]))}
-else  print("IS NORMALLY DISTRIBUTED")
+else  print(tmp)
 }
-}
-
-# Normality QQ plots for for variables collected at all 4 time points (var_names4)
-
-qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
-
-for (i in 1:4) {
-mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
 }
 
 # Shapiro-Wilk test for other variables (HPRS, MIS, behavioural intentions)
@@ -325,6 +317,7 @@ shapiro.test(pull(df[df$session == 1,"MIS"]))
 shapiro.test(pull(df[df$session == 1,"behav"]))
 shapiro.test(pull(df[df$session == 4,"behav"]))
 
+#Plots for other variables (HPRS, MIS, behavioural intentions)
 ggplot(df[df$session == 1,"HPRS"], aes(x=HPRS)) +
   geom_histogram(binwidth = .5) +
   ggtitle(paste0("Session ",1)) + xlab("HPRS")
@@ -342,6 +335,14 @@ ggplot(df[df$session == 4,"behav"], aes(x=behav)) +
   ggtitle(paste0("Session ",4)) + xlab("behav")
 
 
+# Normality QQ plots for for variables collected at all 4 time points (var_names4)
+
+qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
+
+for (i in 1:4) {
+mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
+}
+
 ```
 
 ## Data visualisation
@@ -349,6 +350,14 @@ ggplot(df[df$session == 4,"behav"], aes(x=behav)) +
 
 # Scatter plots e.g. moral piggybacking vs moralisation at time 1, moral piggybacking vs moralisation at time 4 etc
 # DO THESE
+
+# create scatter plot function
+#df %>% ggplot(aes(x = att, y = moral)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)
+scat <- function (x, y) {df %>% 
+    ggplot(aes_string(x = x, y = y)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)}
+
+# Apply to all 4 time-point variables with moralisation as y-variable
+lapply(var_names4, scat, y = "moral")
 
 # Plot of key variables grand mean over each time point
 
