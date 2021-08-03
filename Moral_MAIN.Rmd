@@ -297,7 +297,7 @@ powerSim(fit = m_sim, nsim = 100)
 # ggplot(df[df$session == 4,var_names4[8]], aes(x=emo_obj)) + geom_histogram(binwidth = .5)
 
 
-# Normality: Shaipro-Wilk test per variable mean per session and plot histograms of each distribution
+# Normality: Shapiro-Wilk test per variable mean per session and plot histograms of each distribution for variables collected at all 4 time points (var_names4)
 
 for (i in 1:4) {
 for (j in 1:length(var_names4)) {
@@ -311,8 +311,7 @@ else  print("IS NORMALLY DISTRIBUTED")
 }
 }
 
-
-# Normality QQ plots as above
+# Normality QQ plots for for variables collected at all 4 time points (var_names4)
 
 qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
 
@@ -320,6 +319,27 @@ for (i in 1:4) {
 mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
 }
 
+# Shapiro-Wilk test for other variables (HPRS, MIS, behavioural intentions)
+shapiro.test(pull(df[df$session == 1,"HPRS"]))
+shapiro.test(pull(df[df$session == 1,"MIS"]))
+shapiro.test(pull(df[df$session == 1,"behav"]))
+shapiro.test(pull(df[df$session == 4,"behav"]))
+
+ggplot(df[df$session == 1,"HPRS"], aes(x=HPRS)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",1)) + xlab("HPRS")
+
+ggplot(df[df$session == 1,"MIS"], aes(x=MIS)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",1)) + xlab("MIS")
+
+ggplot(df[df$session == 1,"behav"], aes(x=behav)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",1)) + xlab("behav")
+
+ggplot(df[df$session == 4,"behav"], aes(x=behav)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",4)) + xlab("behav")
 
 
 ```
