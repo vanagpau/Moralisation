@@ -348,8 +348,7 @@ mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MI
 ## Data visualisation
 ```{r}
 
-# Scatter plots e.g. moral piggybacking vs moralisation at time 1, moral piggybacking vs moralisation at time 4 etc
-# DO THESE
+# Scatter plots 
 
 # create scatter plot function
 #df %>% ggplot(aes(x = att, y = moral)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)
