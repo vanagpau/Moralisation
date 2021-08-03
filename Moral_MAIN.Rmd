@@ -294,16 +294,21 @@ powerSim(fit = m_sim, nsim = 100)
 ```{r}
 
 # plots of variables by session
+# ggplot(df[df$session == 4,var_names4[8]], aes(x=emo_obj)) + geom_histogram(binwidth = .5)
 
 
-# Normality: Shaipro-Wilk test per variable mean per session
+# Normality: Shaipro-Wilk test per variable mean per session and plot histograms of each distribution
 
 for (i in 1:4) {
 for (j in 1:length(var_names4)) {
-  print(paste0("Session number ",i,", variable  ",var_names4[j]))
 tmp <- shapiro.test(pull(df[df$session == i,var_names4[j]]))
-if (tmp$p.value < .05) print(shapiro.test(pull(df[,var_names4[j]])))
-else print("NORMAL")}
+print(paste0("Session number ",i,", variable  ",var_names4[j]))
+if (tmp$p.value < .05) {print(tmp)
+  print(ggplot(df[df$session == i,var_names4[j]], aes(x=get(var_names4[j]))) +
+        geom_histogram(binwidth = .5) + ggtitle(paste0("Session ",i)) +
+  xlab(var_names4[j]))}
+else  print("IS NORMALLY DISTRIBUTED")
+}
 }
 
 
@@ -314,9 +319,6 @@ qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session
 for (i in 1:4) {
 mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
 }
-
-
-
 
 
 
