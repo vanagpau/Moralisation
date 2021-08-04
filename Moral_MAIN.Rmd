@@ -421,23 +421,18 @@ df %>% select(PID, session, var_names4) %>%
   scale_color_brewer(palette = "Spectral") + theme_bw()
 
 
-
-
-
 # Plot of each variable by participant
 
-# create function
-spag_plot <- function(x) {
-  df %>% select(PID, session, x) %>% 
-  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>% 
-  group_by(PID, session) %>% transmute(value = mean(value)) %>%
-  ggplot(aes(x = session, y = value, group = PID)) + geom_point(size = 2) +
-  geom_line(size = 0.5) + theme_bw() + ggtitle(x)
-}
-
-
-
-lapply(var_names4, spag_plot)
+# create function for spaghetti plots - note: these don't really show anything
+# spag_plot <- function(x) {
+#   df %>% select(PID, session, x) %>% 
+#   pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>% 
+#   group_by(PID, session) %>% transmute(value = mean(value)) %>%
+#   ggplot(aes(x = session, y = value, group = PID)) + geom_point(size = 2) +
+#   geom_line(size = 0.5) + theme_bw() + ggtitle(x)
+# }
+# 
+# lapply(var_names4, spag_plot)
 
 # Random slopes per participant
 xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"))
@@ -596,7 +591,7 @@ print(identify_outliers(df %>% filter(session == i) %>% select(var_names4[j])))
 df %>% group_by(session) %>% get_summary_stats(moral, type = "mean_sd")
 ggboxplot(df, x = "session", y = c("moral"), add = "jitter")
 
-# Repeated measures ANOVA shows significant, but small (GES = generalised effect size), effect of time
+# Repeated measures ANOVA shows significant, but small effect of time (GES = generalised effect size https://www.psy.gla.ac.uk/~steve/best/effect.html)
 rep.a1 <- anova_test(data = df, dv = moral, wid = PID, within = session)
 get_anova_table(rep.a1)
 
@@ -657,21 +652,23 @@ summary(m2)
 ```
 
 
-# CROSS-LAGGED PANEL ANALYSIS
+# Exploratory Analyses III: Cross-lagged panel analysis
 ```{r}
-# make dataframe into wide format
 
+# 1. MORALISATION and MORAL EMOTIONS
+
+# make dataframe into wide format
 df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
 
 
-## extract data to work with -- m = moralization, e = meat emotions ##
+## extract data to work with -- m = moralization, e = moral emotions ##
 working.data <- df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
 names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'e1', 'e2', 'e3', 'e4')
 
 names(working.data)
 
 
-cross.second <- '
+cross.1 <- '
 m2 ~ m1 + b1*e1
 m3 ~ m2 + b2*e2 + m1
 m4 ~ m3 + b3*e3 + m2
@@ -689,8 +686,43 @@ bb14 := b1-b4
 bb25 := b2-b5
 bb36 := b3-b6'
 
-cross.second.fit <- lavaan(cross.second, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
-summary(cross.second.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
+cross.1.fit <- lavaan(cross.1, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.1.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
+
+# 2. MORALISATION and MORAL PIGGYBACKING
+
+
+# make dataframe into wide format
+df %>% select(PID, moral, session, pig) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, pig)) %>% select(-PID)
+
+
+## extract data to work with -- m = moralization, e = moral piggybacking ##
+working.data <- df %>% select(PID, moral, session, pig) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, pig)) %>% select(-PID)
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'e1', 'e2', 'e3', 'e4')
+
+names(working.data)
+
+
+cross.2 <- '
+m2 ~ m1 + b1*e1
+m3 ~ m2 + b2*e2 + m1
+m4 ~ m3 + b3*e3 + m2
+
+e2 ~ e1 + b4*m1
+e3 ~ e2 + b5*m2 + e1
+e4 ~ e3 + b6*m3 + e2
+
+m1 ~~ e1
+m2 ~~ e2
+m3 ~~ e3
+m4 ~~ e4
+
+bb14 := b1-b4
+bb25 := b2-b5
+bb36 := b3-b6'
+
+cross.2.fit <- lavaan(cross.2, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.2.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
 
 
 ```
