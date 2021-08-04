@@ -433,6 +433,9 @@ df %>% filter(session == 4) %>% select(diss, behav) %>% ggplot(aes(x = diss, y =
 # Correlation
 df %>% filter(session == 4) %>% select(diss, behav) %>% cor_test(diss, behav)
 
+# Dissonance reduction has a MORE NEGATIVE correlation with behavioural intention at time 4 versus time 1
+# So test to see if difference in r values is significant = NO
+paired.r(-.35, -.48, n = 43)
 
 # Plot of key variables grand mean over each time point
 
