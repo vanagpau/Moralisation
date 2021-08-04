@@ -20,6 +20,9 @@ library(lme4)
 library(lattice)
 library(faux)
 library(simr)
+library(rstatix)
+library(ggpubr)
+library(lavaan)
 library(tidyverse)
 
 
@@ -134,82 +137,116 @@ var_names4 <- c("cog", "att", "pig", "hed", "moral", "diss", "emo", "emo_obj")
 
 # Run Cronbach alpha on each questionnaire - detected using regex string matching
 
-# HASHED OUT FOR SPEED
-
 # # Moral cognition 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?1$")])
-# # Moral cognition 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?2$")])
-# # Moral cognition 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?3$")])
-# # Moral cognition 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?4$")])
-# # Attitude 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?1$")])
-# # Attitude 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?2$")])
-# # Attitude 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?3$")])
-# # Attitude 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?4$")])
-# # Moral piggybacking 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?1$")])
-# # Moral piggybacking 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?2$")])
-# # Moral piggybacking 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?3$")])
-# # Moral piggybacking 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?4$")])
-# # Hedonic motivation 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?1$")])
-# # Hedonic motivation 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?2$")])
-# # Hedonic motivation 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?3$")])
-# # Hedonic motivation 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?4$")])
-# # Moralisation 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?1$")])
-# # Moralisation 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?2$")])
-# # Moralisation 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?3$")])
-# # Moralisation 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?4$")])
-# # Dissonance Reduction 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?1$")])
-# # Dissonance Reduction 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?2$")])
-# # Dissonance Reduction 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?3$")])
-# # Dissonance Reduction 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?4$")])
-# # Moral emotions 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?1$")])
-# # Moral emotions 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?2$")])
-# # Moral emotions 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?3$")])
-# # Moral emotions 4
-psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?4$")])
-# # Moral emotions (objects) 1
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?1$")])
-# # Moral emotions (objects) 2
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?2$")])
-# # Moral emotions (objects) 3
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?3$")])
-# # Moral emotions (objects) 4
-# psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?4$")])
-# 
-# # HPRS
-psych::alpha(df_all[,str_detect(colnames(df_all), "HPRS")])
+a1 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?1$")])
+summary(a1)
+# Moral cognition 2
+a2 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?2$")])
+summary(a2)
+# Moral cognition 3
+a3 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?3$")])
+summary(a3)
+# Moral cognition 4
+a4 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?4$")])
+summary(a4)
+# Attitude 1
+a5 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?1$")])
+summary(a5)
+# Attitude 2
+a6 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?2$")])
+summary(a6)
+# Attitude 3
+a7 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?3$")])
+summary(a7)
+# Attitude 4
+a8 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?4$")])
+summary(a8)
+# Moral piggybacking 1
+a9 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?1$")])
+summary(a9)
+# Moral piggybacking 2
+a10 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?2$")])
+summary(a10)
+# Moral piggybacking 3
+a11 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?3$")])
+summary(a11)
+# Moral piggybacking 4
+a12 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?4$")])
+summary(a12)
+# Hedonic motivation 1
+a13 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?1$")])
+summary(a13)
+# Hedonic motivation 2
+a14 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?2$")])
+summary(a14)
+# Hedonic motivation 3
+a15 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?3$")])
+summary(a15)
+# Hedonic motivation 4
+a16 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?4$")])
+summary(a16)
+# Moralisation 1
+a17 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?1$")])
+summary(a17)
+# Moralisation 2
+a18 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?2$")])
+summary(a18)
+# Moralisation 3
+a19 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?3$")])
+summary(a19)
+# Moralisation 4
+a20 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?4$")])
+summary(a20)
+# Dissonance Reduction 1
+a21 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?1$")])
+summary(a21)
+# Dissonance Reduction 2
+a22 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?2$")])
+summary(a22)
+# Dissonance Reduction 3
+a23 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?3$")])
+summary(a23)
+# Dissonance Reduction 4
+a24 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?4$")])
+summary(a24)
+# Moral emotions 1
+a25 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?1$")])
+summary(a25)
+# Moral emotions 2
+a26 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?2$")])
+summary(a26)
+# Moral emotions 3
+a27 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?3$")])
+summary(a27)
+# Moral emotions 4
+a28 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?4$")])
+summary(a28)
+# Moral emotions (objects) 1
+a29 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?1$")])
+summary(a29)
+# Moral emotions (objects) 2
+a30 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?2$")])
+summary(a30)
+# Moral emotions (objects) 3
+a31 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?3$")])
+summary(a31)
+# Moral emotions (objects) 4
+a32 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?4$")])
+summary(a32)
+
+# HPRS
+a33 <- psych::alpha(df_all[,str_detect(colnames(df_all), "HPRS")])
+summary(a33)
 # # MIS
-psych::alpha(df_all[,str_detect(colnames(df_all), "MIS")])
+a34 <- psych::alpha(df_all[,str_detect(colnames(df_all), "MIS")])
+summary(a34)
 # 
 # # Behavioural intentions 1
-psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?1$")])
+a35 <- psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?1$")])
+summary(a35)
 # # Behavioural intentions 2
-psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?4$")])
+a36 <- psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?4$")])
+summary(a36)
 
 
 
@@ -461,59 +498,126 @@ cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% f
 
 # HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
 
-
-
 # Simple linear regression model shows significant effects for both Moral Emotions and Moral Piggybacking
 m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
 summary(m1)
-plot(m1)
 performance::check_model(m1)
+AIC(m1)
 
+# Modelling effect of time = session has significant effect (p = 0.02), but small (coeff = 0.15)
+m2 <- lm(moral ~ session, df)
+summary(m2)
+performance::check_model(m2)
+AIC(m2)
 
+m3 <- lm(moral ~ session + emo, df)
+summary(m3)
+performance::check_model(m3)
+AIC(m3)
 
+m4 <- lm(moral ~ session + emo + pig, df)
+summary(m4)
+performance::check_model(m4)
+AIC(m4)
 
+# Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better, this is important because it differentiates moralisation from attitude change
 
+m5 <- lm(moral ~ session + emo + att, df)
+summary(m5)
+performance::check_model(m5)
+AIC(m5)
 
+m6 <- lm(moral ~ session + pig + att, df)
+summary(m6)
+performance::check_model(m6)
+AIC(m6)
 
+m7 <- lm(moral ~ session + emo + att + pig, df)
+summary(m7)
+performance::check_model(m7)
+AIC(m7)
+
+m8 <- lm(moral ~ session + emo + pig, df)
+summary(m8)
+performance::check_model(m8)
+AIC(m8)
+
+# try fitting other models with additional variable
+
+# Hedonic motivation - does not add anything
+m9 <- lm(moral ~ session + emo + pig + hed, df)
+summary(m9)
+performance::check_model(m9)
+AIC(m9)
+
+# Moral cognitions is significant and absorbs some Moral Emotions variance. m10 AIC score lower than m4
+m10 <- lm(moral ~ session + emo + pig + cog, df)
+summary(m10)
+performance::check_model(m10)
+AIC(m10)
+
+# Do Moral emotions and Moral emotions with regard to people (emo_obj) explain different variance? Answer is no - emo-Obj not significant when emo present
+m11 <- lm(moral ~ session + emo + emo_obj, df)
+summary(m11)
+performance::check_model(m11)
+AIC(m11)
+
+# this is confirmed by adding into best model to date (m10)
+m12 <- lm(moral ~ session + emo + pig + cog + emo_obj, df)
+summary(m12)
+performance::check_model(m12)
+AIC(m12)
+
+# test cognitive dissonance - no significant effect
+m13 <- lm(moral ~ session + emo + pig + cog + diss, df)
+summary(m13)
+performance::check_model(m13)
+AIC(m13)
+
+# test traits - Moral self-identity
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
+# test traits - Psychological reactance
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
+# REPEATED MEASURES ANOVA
+# Test assumptions; 1. Outliers - some outliers but none of them extreme (Values above Q3 + 3xIQR or below Q1 - 3xIQR are considered as extreme)
+
+for (i in 1:4){
+  for (j in 1:length(var_names4)) {
+print(identify_outliers(df %>% filter(session == i) %>% select(var_names4[j])))
+  }
+}
+
+# 2. Normality - moralisation is non-normal at times points 3 and 4 (see Assumptions section above)
+
+# 3. Mauchly's test of sphericity is conducted when anova_test used
+
+df %>% group_by(session) %>% get_summary_stats(moral, type = "mean_sd")
+ggboxplot(df, x = "session", y = c("moral"), add = "jitter")
+
+# Repeated measures ANOVA shows significant, but small (GES = generalised effect size), effect of time
+rep.a1 <- anova_test(data = df, dv = moral, wid = PID, within = session)
+get_anova_table(rep.a1)
+
+# Multiple pair-wise t-tests show that moralisation significant from session 1 to 3 and 1 to 4
+df %>%  pairwise_t_test(moral ~ session, paired = TRUE,p.adjust.method = "bonferroni")
 
 
 ```
 
-# Exploratory analyses I - multi-variate and mixed models
+# Exploratory analyses I - mixed models
 ```{r}
 
 
-# Modelling effect of time
-m2 <- lm(moral ~ session, df)
-summary(m2)
-plot(m2)
-
-m3 <- lm(moral ~ session + emo, df)
-summary(m3)
-plot(m3)
-
-m4 <- lm(moral ~ session + emo + pig, df)
-summary(m4)
-plot(m4)
-
-# Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better
-
-m5 <- lm(moral ~ session + emo + att, df)
-summary(m5)
-plot(m5)
-
-m5 <- lm(moral ~ session + emo + att + pig, df)
-summary(m5)
-plot(m5)
-
 # MIXED MODELS
 
-# NOTE: to to do the mixed models accurately session should be converted to a continuous time variable
+# NOTE: to do the mixed models accurately session should time be converted to a continuous variable??
 
 # Null model
 m1 <- lmer(moral ~ session|PID, data = df)
 summary(m1)
-plot(m1)
+performance::check_model(m1)
 
 # Create linear model with independent predictors
 m2 <- lmer(moral ~ emo + (session|PID), data = df)
@@ -527,8 +631,8 @@ summary(m3)
 plot(m3)
 anova(m1, m3)
 
-# this model has singularity issue:
-m4 <- lmer(moral ~ session + pig + (session|PID), data = df)
+
+m4 <- lmer(moral ~ session + pig + emo + (session|PID), data = df)
 summary(m4)
 
 
@@ -536,7 +640,7 @@ summary(m4)
 ```
 
 ## Exploratory Analyses II - mediating variables
-```{r}
+```{r, include=TRUE, eval=FALSE}
 
 # Influence of MIS on moralisation
 working.data <- df %>% filter(session == 1 | session == 4)
