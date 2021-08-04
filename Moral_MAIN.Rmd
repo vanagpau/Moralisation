@@ -44,16 +44,23 @@ setwd("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/MAIN actual
 # extract 4 character identifier for each questionnaire node
 nam <- str_sub(list.files(pattern = "questionnaire"), -8, -5)
 
-# combine all matching nodes
-for (i in seq(1:length(nam))) {
-  #read in each file, remove additional event as per text and combine all common questionnaire nodes
-  df_temp <- list.files(pattern = nam[i]) %>% lapply(read_csv, na = c("Unexpectedly long close out at end of task!", "NA")) %>% bind_rows()
-    df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") %>%
-    filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
-           !grepl("quantised", `Question Key`) ) %>%
-  select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
-    colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID" #shorten col name to PID
-    assign(paste0("n_",nam[i]), df_temp) #assign df to the name of the dataframe created above
+# combine all matching nodes: ONLY USE FOR NEW DATA
+# for (i in seq(1:length(nam))) {
+#   #read in each file, remove additional event as per text and combine all common questionnaire nodes
+#   df_temp <- list.files(pattern = nam[i]) %>% lapply(read_csv, na = c("Unexpectedly long close out at end of task!", "NA")) %>% bind_rows()
+#     df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") %>%
+#     filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
+#            !grepl("quantised", `Question Key`) ) %>%
+#   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
+#     colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID" #shorten col name to PID
+#     assign(paste0("n_",nam[i]), df_temp) #assign df to the name of the dataframe created above
+#     write_csv(df_temp, file = paste0("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/Main study CSVs/","n_",nam[i],".csv"))
+# }
+
+# Read in csv files for dataframes (much faster for knitting)
+for (i in seq(1:length(unique(nam)))) {
+  df_temp <- read_csv(paste0("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/Main study CSVs/","n_",nam[i],".csv"))
+  assign(paste0("n_",nam[i]), df_temp)
 }
 
 #remove unnecessary dfs from environment (consent, debrief nodes, explainer, survey code pages etc)
