@@ -494,41 +494,44 @@ xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3
 #   (df %>% filter(session == 1) %>% transmute(m = mean(moral)) %>% unique() %>% pull())
 
 # Add mean of each variable measure per participant per session to dataframe
-df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>% ungroup()
-df <- df %>% group_by(PID, session) %>% mutate(sess_pig_mean = mean(pig)) %>% ungroup()
-df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% ungroup()
-df <- df %>% group_by(PID, session) %>% mutate(sess_behav_mean = mean(behav)) %>% ungroup()
+# df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>% ungroup()
+# df <- df %>% group_by(PID, session) %>% mutate(sess_pig_mean = mean(pig)) %>% ungroup()
+# df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% ungroup()
+# df <- df %>% group_by(PID, session) %>% mutate(sess_behav_mean = mean(behav)) %>% ungroup()
 
 #show in dataframe
-df %>% select(PID, session,sess_moral_mean, sess_pig_mean, sess_emo_mean)
+# df %>% select(PID, session,sess_moral_mean, sess_pig_mean, sess_emo_mean)
 
 # Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
-df <- merge(df %>% filter(session == 4) %>% select(PID, sess_moral_mean), df %>%
-        filter(session == 1) %>% select(PID, sess_moral_mean), by = "PID") %>%
-        mutate(moral_delta = sess_moral_mean.x - sess_moral_mean.y) %>% 
+df <- merge(df %>% filter(session == 4) %>% select(PID, moral), df %>%
+        filter(session == 1) %>% select(PID, moral), by = "PID") %>%
+        mutate(moral_delta = moral.x - moral.y) %>% 
         select(PID, moral_delta) %>%
         merge(., df, by = "PID")
 
 # Calculate change in moral piggybacking session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, sess_pig_mean), df %>%
-        filter(session == 1) %>% select(PID, sess_pig_mean), by = "PID") %>%
-        mutate(pig_delta = sess_pig_mean.x - sess_pig_mean.y) %>% 
+df <- merge(df %>% filter(session == 4) %>% select(PID, pig), df %>%
+        filter(session == 1) %>% select(PID, pig), by = "PID") %>%
+        mutate(pig_delta = pig.x - pig.y) %>% 
         select(PID, pig_delta) %>%
         merge(., df, by = "PID")
 
 # Calculate change in moral emotions session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, sess_emo_mean), df %>%
-        filter(session == 1) %>% select(PID, sess_emo_mean), by = "PID") %>%
-        mutate(emo_delta = sess_emo_mean.x - sess_emo_mean.y) %>% 
+df <- merge(df %>% filter(session == 4) %>% select(PID, emo), df %>%
+        filter(session == 1) %>% select(PID, emo), by = "PID") %>%
+        mutate(emo_delta = emo.x - emo.y) %>% 
         select(PID, emo_delta) %>%
         merge(., df, by = "PID")
 
 # # Calculate change in behavioural intentions session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, sess_behav_mean), df %>%
-        filter(session == 1) %>% select(PID, sess_behav_mean), by = "PID") %>%
-        mutate(behav_delta = sess_behav_mean.x - sess_behav_mean.y) %>% 
+df <- merge(df %>% filter(session == 4) %>% select(PID, behav), df %>%
+        filter(session == 1) %>% select(PID, behav), by = "PID") %>%
+        mutate(behav_delta = behav.x - behav.y) %>% 
         select(PID, behav_delta) %>%
         merge(., df, by = "PID")
+
+#show in dataframe
+df %>% select(PID, moral_delta, emo_delta, pig_delta, behav_delta) %>% unique()
 
 # Scatter plots
 df %>% ggplot(aes(x = emo_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
@@ -536,10 +539,10 @@ df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(
 df %>% ggplot(aes(x = behav_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
 
 # Correlation of change in moralisation versus change in moral piggybacking
-cor.test (pull(df %>% filter(session == 4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_pig_mean) - df %>% filter(session ==1) %>% select(sess_pig_mean)))
+cor.test (pull(df %>% filter(session == 4) %>% select(moral) - df %>% filter(session == 1) %>% select(moral)), pull(df %>% filter(session ==4) %>% select(pig) - df %>% filter(session ==1) %>% select(pig)))
 
 # Correlation of change in moralisation versus change in moral emotions
-cor.test (pull(df %>% filter(session ==4) %>% select(sess_moral_mean) - df %>% filter(session == 1) %>% select(sess_moral_mean)), pull(df %>% filter(session ==4) %>% select(sess_emo_mean) - df %>% filter(session ==1) %>% select(sess_emo_mean)))
+cor.test (pull(df %>% filter(session ==4) %>% select(moral) - df %>% filter(session == 1) %>% select(moral)), pull(df %>% filter(session ==4) %>% select(emo) - df %>% filter(session ==1) %>% select(emo)))
 
 # HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
 
@@ -548,82 +551,6 @@ m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
 summary(m1)
 performance::check_model(m1)
 AIC(m1)
-
-# Modelling effect of time = session has significant effect (p = 0.02), but small (coeff = 0.15)
-m2 <- lm(moral ~ session, df)
-summary(m2)
-performance::check_model(m2)
-AIC(m2)
-
-m3 <- lm(moral ~ session + emo, df)
-summary(m3)
-performance::check_model(m3)
-AIC(m3)
-
-m4 <- lm(moral ~ session + emo + pig, df)
-summary(m4)
-performance::check_model(m4)
-AIC(m4)
-
-# Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better, this is important because it differentiates moralisation from attitude change
-
-m5 <- lm(moral ~ session + emo + att, df)
-summary(m5)
-performance::check_model(m5)
-AIC(m5)
-
-m6 <- lm(moral ~ session + pig + att, df)
-summary(m6)
-performance::check_model(m6)
-AIC(m6)
-
-m7 <- lm(moral ~ session + emo + att + pig, df)
-summary(m7)
-performance::check_model(m7)
-AIC(m7)
-
-m8 <- lm(moral ~ session + emo + pig, df)
-summary(m8)
-performance::check_model(m8)
-AIC(m8)
-
-# try fitting other models with additional variable
-
-# Hedonic motivation - does not add anything
-m9 <- lm(moral ~ session + emo + pig + hed, df)
-summary(m9)
-performance::check_model(m9)
-AIC(m9)
-
-# Moral cognitions is significant and absorbs some Moral Emotions variance. m10 AIC score lower than m4
-m10 <- lm(moral ~ session + emo + pig + cog, df)
-summary(m10)
-performance::check_model(m10)
-AIC(m10)
-
-# Do Moral emotions and Moral emotions with regard to people (emo_obj) explain different variance? Answer is no - emo-Obj not significant when emo present
-m11 <- lm(moral ~ session + emo + emo_obj, df)
-summary(m11)
-performance::check_model(m11)
-AIC(m11)
-
-# this is confirmed by adding into best model to date (m10)
-m12 <- lm(moral ~ session + emo + pig + cog + emo_obj, df)
-summary(m12)
-performance::check_model(m12)
-AIC(m12)
-
-# test cognitive dissonance - no significant effect
-m13 <- lm(moral ~ session + emo + pig + cog + diss, df)
-summary(m13)
-performance::check_model(m13)
-AIC(m13)
-
-# test traits - Moral self-identity
-cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
-
-# test traits - Psychological reactance
-cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
 # REPEATED MEASURES ANOVA
 # Test assumptions; 1. Outliers - some outliers but none of them extreme (Values above Q3 + 3xIQR or below Q1 - 3xIQR are considered as extreme)
@@ -647,6 +574,84 @@ get_anova_table(rep.a1)
 
 # Multiple pair-wise t-tests show that moralisation significant from session 1 to 3 and 1 to 4
 df %>%  pairwise_t_test(moral ~ session, paired = TRUE,p.adjust.method = "bonferroni")
+
+
+# Modelling effect of time = session has significant effect (p = 0.02), but small (coeff = 0.15)
+m2 <- lm(moral ~ session, df)
+summary(m2)
+performance::check_model(m2)
+AIC(m2)
+
+m3 <- lm(moral ~ session + emo, df)
+summary(m3)
+performance::check_model(m3)
+AIC(m3)
+
+m4 <- lm(moral ~ session + emo + pig, df)
+summary(m4)
+performance::check_model(m4)
+AIC(m4)
+
+# Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better, this is important because it differentiates moralisation from attitude change
+
+m5 <- lm(moral ~ emo + att, df)
+summary(m5)
+performance::check_model(m5)
+AIC(m5)
+
+m6 <- lm(moral ~ pig + att, df)
+summary(m6)
+performance::check_model(m6)
+AIC(m6)
+
+m7 <- lm(moral ~ emo + att + pig, df)
+summary(m7)
+performance::check_model(m7)
+AIC(m7)
+
+m8 <- lm(moral ~ emo + pig, df)
+summary(m8)
+performance::check_model(m8)
+AIC(m8)
+
+# try fitting other models with additional variable
+
+# Hedonic motivation - does not add anything
+m9 <- lm(moral ~ emo + pig + hed, df)
+summary(m9)
+performance::check_model(m9)
+AIC(m9)
+
+# Moral cognitions is significant and absorbs some Moral Emotions variance. m10 AIC score lower than m4
+m10 <- lm(moral ~ emo + pig + cog, df)
+summary(m10)
+performance::check_model(m10)
+AIC(m10)
+
+# Do Moral emotions and Moral emotions with regard to people (emo_obj) explain different variance? Answer is no - emo-Obj not significant when emo present
+m11 <- lm(moral ~ emo + emo_obj, df)
+summary(m11)
+performance::check_model(m11)
+AIC(m11)
+
+# this is confirmed by adding into best model to date (m10)
+m12 <- lm(moral ~ emo + pig + cog + emo_obj, df)
+summary(m12)
+performance::check_model(m12)
+AIC(m12)
+
+# test cognitive dissonance - no significant effect
+m13 <- lm(moral ~ emo + pig + cog + diss, df)
+summary(m13)
+performance::check_model(m13)
+AIC(m13)
+
+# test traits - Moral self-identity
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
+# test traits - Psychological reactance
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
 
 
 ```
