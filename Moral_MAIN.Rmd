@@ -462,6 +462,11 @@ df %>% select(PID, session, var_names4) %>%
   scale_color_brewer(palette = "Spectral") + theme_bw()
 
 
+# Plot of hedonic motivation variable distribution by session
+
+df %>% ggplot(aes(x = hed)) + geom_histogram(binwidth = .1) + facet_wrap(~session)
+
+
 # Plot of each variable by participant
 
 # create function for spaghetti plots - note: these don't really show anything
@@ -558,21 +563,21 @@ summary(m1.1)
 performance::check_model(m1.1)
 AIC(m1.1)
 
-# When model1 is replicated using this method, the effect of moral emotions
+# When model1 is replicated using this method, the effect of moral emotions becomes non-significant
 
 m1.2 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1, data = wide_df)
 summary(m1.2)
 performance::check_model(m1.2)
 AIC(m1.2)
 
-# When moral cognitions is added..
+# When moral cognitions is added it becomes very non-significant
 
 m1.3 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + cog_delta_1, data = wide_df)
 summary(m1.3)
 performance::check_model(m1.3)
 AIC(m1.3)
 
-# This model shows that without moral emotions, moral cognitions do become significant, therefore by inference play a greater role in predicting moralisation in this case
+# This model shows that without moral emotions, moral cognitions do become significant, therefore by inference play a greater role in predicting moralisation in this experiment
 
 m1.4 <- lm(moral_4 ~ moral_1 + pig_delta_1 + cog_delta_1, data = wide_df)
 summary(m1.4)
@@ -678,6 +683,35 @@ m13 <- lm(moral ~ emo + pig + cog + diss, df)
 summary(m13)
 performance::check_model(m13)
 AIC(m13)
+
+
+# Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
+
+# Show which variables are correlated with moralisation = all of them
+c1 <- df %>% select(var_names4) %>% cor()
+corPlot(c1,stars = TRUE)
+
+# Do moral piggybacking and moral cognitions mediate the other variables?
+
+#model direct effect (IV on DV)
+direct.m1 <- lm(moral ~ pig + cog, df)
+summary(direct.model)
+
+#model effect of IV's on mediator variable 1
+step1.m1 <- lm(emo ~ pig + cog, df) 
+summary(step1.m1)
+
+# model effect of mediator variable on DV, controlling for 
+step2.m1 <- lm(moral ~ pig + cog + emo, df)
+summary(step2.m1)
+
+# These analyses show that the effect of moral cognitions is PARTIALLY mediated by Moral Emotions, as the direct relationship is lowered when emotions is present, but moral piggybacking is partially negatively mediated by moral emotions
+
+med1 <- mediation::mediate(step1.m1, step2.m1, treat=c('pig', 'cog'), mediator='emo', boot=T)
+summary(med1)
+
+
+
 
 # test traits - Moral self-identity
 cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
