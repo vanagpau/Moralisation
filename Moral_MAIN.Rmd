@@ -655,6 +655,12 @@ summary(m10)
 performance::check_model(m10)
 AIC(m10)
 
+# Run model with cog + pig only -> AIC(327), still slightly worse than m10(324)
+m10.1 <- lm(moral ~ pig + cog, df)
+summary(m10.1)
+performance::check_model(m10.1)
+AIC(m10.1)
+
 # Do Moral emotions and Moral emotions with regard to people (emo_obj) explain different variance? Answer is no - emo-Obj not significant when emo present
 m11 <- lm(moral ~ emo + emo_obj, df)
 summary(m11)
