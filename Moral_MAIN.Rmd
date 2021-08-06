@@ -510,11 +510,18 @@ df <- merge(df %>% filter(session == 4) %>% select(PID, emo), df %>%
         select(PID, emo_delta) %>%
         merge(., df, by = "PID")
 
-# # Calculate change in behavioural intentions session 4 - session 1 per participant and add to dataframe
+# Calculate change in behavioural intentions session 4 - session 1 per participant and add to dataframe
 df <- merge(df %>% filter(session == 4) %>% select(PID, behav), df %>%
         filter(session == 1) %>% select(PID, behav), by = "PID") %>%
         mutate(behav_delta = behav.x - behav.y) %>% 
         select(PID, behav_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral cognitions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, cog), df %>%
+        filter(session == 1) %>% select(PID, cog), by = "PID") %>%
+        mutate(cog_delta = cog.x - cog.y) %>% 
+        select(PID, cog_delta) %>%
         merge(., df, by = "PID")
 
 #show in dataframe
@@ -524,6 +531,7 @@ df %>% select(PID, moral_delta, emo_delta, pig_delta, behav_delta) %>% unique()
 df %>% ggplot(aes(x = emo_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
 df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
 df %>% ggplot(aes(x = behav_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+df %>% ggplot(aes(x = cog_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
 
 # Correlation of change in moralisation versus change in moral piggybacking
 cor.test (pull(df %>% filter(session == 4) %>% select(moral) - df %>% filter(session == 1) %>% select(moral)), pull(df %>% filter(session ==4) %>% select(pig) - df %>% filter(session ==1) %>% select(pig)))
@@ -538,6 +546,38 @@ m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
 summary(m1)
 performance::check_model(m1)
 AIC(m1)
+
+# re-run regression models using session 4 moralisation as DV and session 1 as a co-variate
+
+# This shows that moralisation at session 1 is significant predictor of moralisation at session 4
+
+wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, emo, moral, pig_delta, emo_delta, moral_delta, cog_delta))
+
+m1.1 <- lm(moral_4 ~ moral_1, data = wide_df)
+summary(m1.1)
+performance::check_model(m1.1)
+AIC(m1.1)
+
+# When model1 is replicated using this method, the effect of moral emotions
+
+m1.2 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1, data = wide_df)
+summary(m1.2)
+performance::check_model(m1.2)
+AIC(m1.2)
+
+# When moral cognitions is added..
+
+m1.3 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + cog_delta_1, data = wide_df)
+summary(m1.3)
+performance::check_model(m1.3)
+AIC(m1.3)
+
+# This model shows that without moral emotions, moral cognitions do become significant, therefore by inference play a greater role in predicting moralisation in this case
+
+m1.4 <- lm(moral_4 ~ moral_1 + pig_delta_1 + cog_delta_1, data = wide_df)
+summary(m1.4)
+performance::check_model(m1.4)
+AIC(m1.4)
 
 # REPEATED MEASURES ANOVA
 # Test assumptions; 1. Outliers - some outliers but none of them extreme (Values above Q3 + 3xIQR or below Q1 - 3xIQR are considered as extreme)
