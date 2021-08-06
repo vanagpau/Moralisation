@@ -489,19 +489,6 @@ xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3
 
 # HYPOTHESIS 1: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted by moral emotions and moral piggybacking as measured by positive bi-variate correlation > 0.3.
 
-# Calculate overall change in moralisation across whole sample at session 4 from session 1
-# (df %>% filter(session == 4) %>% transmute(m = mean(moral)) %>% unique()) %>% pull() - 
-#   (df %>% filter(session == 1) %>% transmute(m = mean(moral)) %>% unique() %>% pull())
-
-# Add mean of each variable measure per participant per session to dataframe
-# df <- df %>% group_by(PID, session) %>% mutate(sess_moral_mean = mean(moral)) %>% ungroup()
-# df <- df %>% group_by(PID, session) %>% mutate(sess_pig_mean = mean(pig)) %>% ungroup()
-# df <- df %>% group_by(PID, session) %>% mutate(sess_emo_mean = mean(emo)) %>% ungroup()
-# df <- df %>% group_by(PID, session) %>% mutate(sess_behav_mean = mean(behav)) %>% ungroup()
-
-#show in dataframe
-# df %>% select(PID, session,sess_moral_mean, sess_pig_mean, sess_emo_mean)
-
 # Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
 df <- merge(df %>% filter(session == 4) %>% select(PID, moral), df %>%
         filter(session == 1) %>% select(PID, moral), by = "PID") %>%
