@@ -72,11 +72,6 @@ rm(df_temp)
 #create list of remaining dataframes (as strings)
 dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
-#INCOMPLETE CODE
-#create list of remaining dataframe (as objects)
-#lapply(ls(pattern="n_"), function(x) get(x))
-#save to csv for quick recall in subsequent chunk
-#lapply(dflist, write_csv, file = paste0(dflist,".csv"))
 
 ```
 ## Data wrangle
@@ -695,7 +690,7 @@ corPlot(c1,stars = TRUE)
 
 #model direct effect (IV on DV)
 direct.m1 <- lm(moral ~ pig + cog, df)
-summary(direct.model)
+summary(direct.m1)
 
 #model effect of IV's on mediator variable 1
 step1.m1 <- lm(emo ~ pig + cog, df) 
