@@ -24,6 +24,8 @@ library(rstatix)
 library(ggpubr)
 library(lavaan)
 library(apaTables)
+library(gridExtra)
+library(kableExtra)
 library(tidyverse)
 
 
@@ -292,9 +294,6 @@ t9 <- rbind(pig1, pig2, pig3, pig4)
 # create final dataframe by column binding t1-t9 matching by participant ID and session number
 df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, HPRS1), by=c("PID", "session"), type='left') %>% ungroup()
 
-# Standardise all variables
-df[,3:13] <- scale(df[,3:13])
-
 # Convert PID to factor from numeric
 df$PID <- as.factor(df$PID)
 
@@ -302,6 +301,13 @@ df$PID <- as.factor(df$PID)
 complete <- df %>% select(PID, session) %>% pivot_wider(names_from = session, values_from = session) %>% na.omit() %>% select(PID) %>% pull()
 
 df <- df %>% filter(PID %in% complete)
+
+#Report descriptives of HPRS and MSI
+describe(df$HPRS)
+describe(df$MIS)
+
+# Standardise all variables
+df[,3:13] <- scale(df[,3:13])
 
 # report number of participants in analysis
 length(unique(df$PID))
@@ -393,10 +399,15 @@ for (i in 1:4) {
 mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
 }
 
+
 ```
 
-## Data visualisation
+## Data descritpives and visualisation
 ```{r}
+
+# Descriptive statistics
+wide_df_all <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = var_names)
+describe(wide_df_all) %>% kbl(digits = 2, format = "html") %>% save_kable("descriptives.html")
 
 # Scatter plots 
 
@@ -529,7 +540,8 @@ df <- merge(df %>% filter(session == 4) %>% select(PID, cog), df %>%
 df %>% select(PID, moral_delta, emo_delta, pig_delta, behav_delta) %>% unique()
 
 # Scatter plots
-df %>% ggplot(aes(x = emo_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+df %>% ggplot(aes(x = emo_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm) + theme_classic() + xlab("Change in Moral Emotions (Session 4 - Session 1)") + ylab("Change in Moralisation (Session 4 - Session 1)")
+df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm) + theme_classic() + xlab("Change in Moral Piggybacking (Session 4 - Session 1)") + ylab("Change in Moralisation (Session 4 - Session 1)")
 df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
 df %>% ggplot(aes(x = behav_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
 df %>% ggplot(aes(x = cog_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
@@ -685,7 +697,31 @@ AIC(m13)
 
 # Show which variables are correlated with moralisation = all of them
 c1 <- df %>% select(var_names4) %>% cor()
-corPlot(c1,stars = TRUE)
+colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+
+# Code to add significance data to correlation matrix
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(df %>% select(var_names4))
+head(p.mat[, 1:5])
+
+corrplot::corrplot(c1, method = "circle", type = "upper", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1)
+
+
 
 apaTables::apa.cor.table(c1, filename = "corrtable.doc")
 
