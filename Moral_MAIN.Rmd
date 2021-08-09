@@ -24,7 +24,7 @@ library(rstatix)
 library(ggpubr)
 library(lavaan)
 library(apaTables)
-library(gridExtra)
+library(sjPlot)
 library(kableExtra)
 library(tidyverse)
 
@@ -490,8 +490,6 @@ df %>% ggplot(aes(x = hed)) + geom_histogram(binwidth = .1) + facet_wrap(~sessio
 # Random slopes per participant
 xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"))
 
-# Interaction plot
-#interaction.plot(df$session, df$PID, df$moral, legend = FALSE)
 
 
 ```
@@ -553,6 +551,35 @@ cor.test (pull(df %>% filter(session == 4) %>% select(moral) - df %>% filter(ses
 cor.test (pull(df %>% filter(session ==4) %>% select(moral) - df %>% filter(session == 1) %>% select(moral)), pull(df %>% filter(session ==4) %>% select(emo) - df %>% filter(session ==1) %>% select(emo)))
 
 # HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
+
+# Show which variables are correlated with moralisation = all of them
+c1 <- df %>% select(var_names4) %>% cor()
+colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+
+# Function to create matrix of p-values to add significance data to correlation matrix
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+
+# matrix of the p-value of the correlation with matched column and row names
+p.mat <- cor.mtest(df %>% select(var_names4))
+colnames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+rownames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+head(p.mat[, 1:5])
+
+corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
 
 # Simple linear regression model shows significant effects for both Moral Emotions and Moral Piggybacking
 m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
@@ -632,6 +659,8 @@ summary(m4)
 performance::check_model(m4)
 AIC(m4)
 
+tab_model(m2, m3, m4, file = "tab1.html")
+
 # Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better, this is important because it differentiates moralisation from attitude change
 
 m5 <- lm(moral ~ emo + att, df)
@@ -694,36 +723,6 @@ AIC(m13)
 
 
 # Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
-
-# Show which variables are correlated with moralisation = all of them
-c1 <- df %>% select(var_names4) %>% cor()
-colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
-rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
-
-# Code to add significance data to correlation matrix
-cor.mtest <- function(mat, ...) {
-    mat <- as.matrix(mat)
-    n <- ncol(mat)
-    p.mat<- matrix(NA, n, n)
-    diag(p.mat) <- 0
-    for (i in 1:(n - 1)) {
-        for (j in (i + 1):n) {
-            tmp <- cor.test(mat[, i], mat[, j], ...)
-            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
-        }
-    }
-  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
-  p.mat
-}
-# matrix of the p-value of the correlation
-p.mat <- cor.mtest(df %>% select(var_names4))
-head(p.mat[, 1:5])
-
-corrplot::corrplot(c1, method = "circle", type = "upper", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1)
-
-
-
-apaTables::apa.cor.table(c1, filename = "corrtable.doc")
 
 # Do moral piggybacking and moral cognitions mediate the other variables?
 
