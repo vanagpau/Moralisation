@@ -661,66 +661,45 @@ AIC(m4)
 
 tab_model(m2, m3, m4, file = "tab1.html")
 
-# Adding attitude measure shows that moral emotions and piggybacking account for variance and predict moralisation better, this is important because it differentiates moralisation from attitude change
+# Adding other variables one by one to see impact on model fit
 
-m5 <- lm(moral ~ emo + att, df)
+# Attitude non-significant
+m5 <- lm(moral ~ emo + pig + att, df)
 summary(m5)
 performance::check_model(m5)
 AIC(m5)
 
-m6 <- lm(moral ~ pig + att, df)
+# Hedonic Motivation non-significant
+m6 <- lm(moral ~ emo + pig + hed, df)
 summary(m6)
 performance::check_model(m6)
 AIC(m6)
 
-m7 <- lm(moral ~ emo + att + pig, df)
+# Dissonance Reduction - non-significant
+m7 <- lm(moral ~ emo + pig + diss, df)
 summary(m7)
 performance::check_model(m7)
 AIC(m7)
 
-m8 <- lm(moral ~ emo + pig, df)
+# Moral cognitions is significant by this measure and absorbs some Moral Emotions variance. m8 AIC score lower than m4
+m8 <- lm(moral ~ emo + pig + cog, df)
 summary(m8)
 performance::check_model(m8)
 AIC(m8)
 
-# try fitting other models with additional variable
-
-# Hedonic motivation - does not add anything
-m9 <- lm(moral ~ emo + pig + hed, df)
+# People Meotions non-significant
+m9 <- lm(moral ~ emo + pig + emo_obj, df)
 summary(m9)
 performance::check_model(m9)
 AIC(m9)
 
-# Moral cognitions is significant by this measure and absorbs some Moral Emotions variance. m10 AIC score lower than m4
+tab_model(m5, m6, m7, m8, file = "tab2.html")
+
+# Run model with cog + pig only -> AIC still  worse than m10
 m10 <- lm(moral ~ emo + pig + cog, df)
 summary(m10)
 performance::check_model(m10)
 AIC(m10)
-
-# Run model with cog + pig only -> AIC still  worse than m10
-m10.1 <- lm(moral ~ pig + cog, df)
-summary(m10.1)
-performance::check_model(m10.1)
-AIC(m10.1)
-
-# Do Moral emotions and Moral emotions with regard to people (emo_obj) explain different variance? Answer is no - emo-Obj not significant when emo present
-m11 <- lm(moral ~ emo + emo_obj, df)
-summary(m11)
-performance::check_model(m11)
-AIC(m11)
-
-# this is confirmed by adding into best model to date (m10)
-m12 <- lm(moral ~ emo + pig + cog + emo_obj, df)
-summary(m12)
-performance::check_model(m12)
-AIC(m12)
-
-# test cognitive dissonance - no significant effect
-m13 <- lm(moral ~ emo + pig + cog + diss, df)
-summary(m13)
-performance::check_model(m13)
-AIC(m13)
-
 
 # Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
 
@@ -764,30 +743,39 @@ cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(
 
 # MIXED MODELS
 
-# NOTE: to do the mixed models accurately session should time be converted to a continuous variable??
+# NOTE: to do the mixed models accurately for session should time be converted to a continuous variable??
 
 # Null model
-m1 <- lmer(moral ~ session|PID, data = df)
-summary(m1)
-performance::check_model(m1)
+mm1 <- lmer(moral ~ session|PID, data = df)
+summary(mm1)
+performance::check_model(mm1)
 
 # Create linear model with independent predictors
-m2 <- lmer(moral ~ emo + (session|PID), data = df)
-summary(m2)
-plot(m2)
+mm2 <- lmer(moral ~ emo + pig + cog + (session|PID), data = df)
+summary(mm2)
+plot(mm2)
+performance::check_model(mm2)
+plot_model(mm2, type = "re")
+plot_model(mm2, type = "std", show.values = TRUE)
 
-anova(m1, m2)
+anova(mm1, mm2)
 
-m3 <- lmer(moral ~ pig + (session|PID), data = df)
-summary(m3)
-plot(m3)
-anova(m1, m3)
+mm3 <- lmer(moral ~ emo + pig + cog + diss + (session|PID), data = df)
+summary(mm3)
+plot(mm3)
+anova(mm2, mm3)
 
+mm4 <- lmer(moral ~ emo + pig + cog + hed + (session|PID), data = df)
+summary(mm4)
+performance::check_model(mm4)
+anova(mm4, mm2)
 
-m4 <- lmer(moral ~ session + pig + emo + (session|PID), data = df)
-summary(m4)
+mm5 <- lmer(moral ~ emo + pig + cog + att + (session|PID), data = df)
+summary(mm5)
+performance::check_model(mm5)
+anova(mm5, mm2)
 
-
+tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
 
 ```
 
