@@ -488,7 +488,7 @@ df %>% ggplot(aes(x = hed)) + geom_histogram(binwidth = .1) + facet_wrap(~sessio
 # lapply(var_names4, spag_plot)
 
 # Random slopes per participant
-xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"))
+xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"), xlab = "Session", ylab = "Moralisation")
 
 
 
@@ -755,7 +755,7 @@ mm2 <- lmer(moral ~ emo + pig + cog + (session|PID), data = df)
 summary(mm2)
 plot(mm2)
 performance::check_model(mm2)
-plot_model(mm2, type = "re")
+plot_model(mm2, type = "re", show.intercept = FALSE)
 plot_model(mm2, type = "std", show.values = TRUE)
 
 anova(mm1, mm2)
