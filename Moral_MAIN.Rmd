@@ -26,6 +26,7 @@ library(lavaan)
 library(apaTables)
 library(sjPlot)
 library(kableExtra)
+library(gridExtra)
 library(tidyverse)
 
 
@@ -701,26 +702,6 @@ summary(m10)
 performance::check_model(m10)
 AIC(m10)
 
-# Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
-
-# Do moral piggybacking and moral cognitions mediate the other variables?
-
-#model direct effect (IV on DV)
-direct.m1 <- lm(moral ~ pig + cog, df)
-summary(direct.m1)
-
-#model effect of IV's on mediator variable 1
-step1.m1 <- lm(emo ~ pig + cog, df) 
-summary(step1.m1)
-
-# model effect of mediator variable on DV, controlling for 
-step2.m1 <- lm(moral ~ pig + cog + emo, df)
-summary(step2.m1)
-
-# These analyses show that the effect of moral cognitions is PARTIALLY mediated by Moral Emotions, as the direct relationship is lowered when emotions is present, but moral piggybacking is partially negatively mediated by moral emotions
-
-med1 <- mediation::mediate(step1.m1, step2.m1, treat=c('pig', 'cog'), mediator='emo', boot=T)
-summary(med1)
 
 
 
@@ -782,18 +763,66 @@ tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
 ## Exploratory Analyses II - mediating variables
 ```{r, include=TRUE, eval=FALSE}
 
-# Influence of MIS on moralisation
-working.data <- df %>% filter(session == 1 | session == 4)
+# Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
 
-m2 <- lmer(moral ~ MIS + (session|PID), data = working.data)
-summary(m2)
+# Test whether Moral Emotions mediates other variables using mediate package
+
+# Do moral piggybacking and moral cognitions mediate the other variables?
+
+# #model direct effect of IV's on DV
+# direct.m1 <- lm(moral ~ att + hed + diss, df)
+# summary(direct.m1)
+# 
+# #model effect of IV's on mediator variable - Moral emotions
+# step1.m1 <- lm(emo ~ att + hed + diss, df) 
+# summary(step1.m1)
+# 
+# # model effect of mediator variables on DV, controlling for IV's
+# total.m1 <- lm(moral ~ emo + att + diss + hed, df)
+# summary(step2.m1)
+
+# These analyses show that the effect of moral cognitions is PARTIALLY mediated by Moral Emotions, as the direct relationship is lowered when emotions is present, but moral piggybacking is partially negatively mediated by moral emotions
+
+# Using mediate function of psych package
+
+# Rename variables in dataframe for plotting
+names(df)[names(df) == 'moral'] <- 'Moralisation'
+names(df)[names(df) == 'pig'] <- 'Moral Piggybacking'
+names(df)[names(df) == 'att'] <- 'Attitude'
+names(df)[names(df) == 'diss'] <- 'Dissonance Reduction'
+names(df)[names(df) == 'emo'] <- 'Moral Emotions'
+names(df)[names(df) == 'hed'] <- 'Hedonic Motivation'
+
+
+# IV = hed; mod = emo + pig
+med1 <- psych::mediate('Moralisation', 'Hedonic Motivation', m = c('Moral Emotions', 'Moral Piggybacking'), data = df, main = "c = Direct Effect; c' = Indirect Effect")
+summary(med1)
+
+# IV = hed; mod = emo + pig
+med2 <- psych::mediate('moral', 'att', m = c('emo', 'pig'), data = df)
+summary(med2)
+
+# IV = diss; mod = emo + pig
+med3 <- psych::mediate('moral', 'diss', m = c('emo', 'pig'), data = df)
+summary(med3)
+
+# IV = emo_obj; mod = emo + pig
+med4 <- psych::mediate('moral', 'emo_obj', m = c('emo', 'pig'), data = df)
+summary(med4)
+
+
+mediate.diagram(med1, main = "KEY: hed = Hedonic Motivation, emo = Moral Emotions\npig = Moral Piggybacking, moral = Moralisation")
+mediate.diagram(med2, main = "KEY: att = Attitude")
+mediate.diagram(med3, main = "KEY: diss = Dissonance Reduction Strategies")
+mediate.diagram(med4, main = "KEY: emo_obj = People Emotions")
 
 
 
-# Influence of HPRS on moralisation and relationship to dissonance reduction
+# Note that emo/emo_obj shows a different result when emo is the mediator..
+med5 <- psych::mediate('moral', 'emo', m = c('emo_obj', 'pig'), data = df)
+summary(med5)
 
 
-# Effects on behavioural intentions of all variables (correlation matrix)
 ```
 
 
