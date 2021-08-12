@@ -73,8 +73,6 @@ rm(n_1dbi,n_o3u2, n_q986, n_1dbi, n_8941, n_gbx3)
 #remove df_temp from workspace to prevent double counting
 rm(df_temp)
 
-#create list of remaining dataframes (as strings)
-dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 
 ```
@@ -100,6 +98,14 @@ n_wxzl$Response <- str_replace_all(n_wxzl$Response, c(
 
 # Reverse score item MIS4
 n_ubog[n_ubog$`Question Key` == "MIS4",'Response'] <- n_ubog %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
+
+# Remove incorrect items MIS3 and MIS5
+n_ubog <- n_ubog %>% filter(`Question Key` == "MIS1" | `Question Key` == "MIS2" | `Question Key` == "MIS4" | `Question Key` == "MIS6" | `Question Key` == "MIS7" | `Question Key` == "MIS8" | `Question Key` == "MIS9" | `Question Key` == "MIS10")
+
+
+
+
+
 
 # Reverse score item diss7 (across 4 spreadsheet/nodes)
 n_hhto[n_hhto$`Question Key` == "diss7",'Response'] <- n_hhto %>% filter(`Question Key`== "diss7") %>% select(Response) %>% transmute(Response = 6 - Response)
@@ -135,6 +141,10 @@ n_zd7j$session <- 2
 n_zm3i$session <- 4
 
 ## Calculate mean scores for variables within individual dataframes (one variable / dataframe)
+
+
+#create list of dataframes (as strings)
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
 
 # create list of variable names to search for
 var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
@@ -263,6 +273,8 @@ summary(a36)
 
 
 
+
+
 # Create function to calculate variable mean scores
 fn_var <- function(d, s1) {
  nam <- paste0(s1, get(d)[1,5]) #create dataframe name from input dataframe and variable string
@@ -276,6 +288,17 @@ fn_var <- function(d, s1) {
 for (i in 1:length(var_names)) {
 lapply(dflist, fn_var, s1 = var_names[i] )
 }
+
+# Create 2 new dataframes for MSI sub-scales
+# Internalisation
+MIS_I <- n_ubog %>% filter(`Question Key` == "MIS1" | `Question Key` == "MIS2" | `Question Key` == "MIS4" | `Question Key` == "MIS6")
+# Symbolisation
+MIS_S <- n_ubog %>% filter(`Question Key` == "MIS7" | `Question Key` == "MIS8" | `Question Key` == "MIS9" | `Question Key` == "MIS10")
+
+# Reshape to fit including means
+MIS_I <- MIS_I %>% group_by(PID) %>% mutate("MIS_I" := mean(Response)) %>% select(PID, session, MIS_I) %>% distinct()
+
+MIS_S <- MIS_S %>% group_by(PID) %>% mutate("MIS_S" := mean(Response)) %>% select(PID, session, MIS_S) %>% distinct()
 
 # remove old dataframes
 rm(list = dflist)
@@ -293,7 +316,7 @@ t8 <- rbind(moral1, moral2, moral3, moral4)
 t9 <- rbind(pig1, pig2, pig3, pig4)
 
 # create final dataframe by column binding t1-t9 matching by participant ID and session number
-df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, HPRS1), by=c("PID", "session"), type='left') %>% ungroup()
+df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, MIS_I, MIS_S, HPRS1), by=c("PID", "session"), type='left') %>% ungroup()
 
 # Convert PID to factor from numeric
 df$PID <- as.factor(df$PID)
@@ -308,7 +331,7 @@ describe(df$HPRS)
 describe(df$MIS)
 
 # Standardise all variables
-df[,3:13] <- scale(df[,3:13])
+df[,3:15] <- scale(df[,3:15])
 
 # report number of participants in analysis
 length(unique(df$PID))
@@ -583,41 +606,44 @@ head(p.mat[, 1:5])
 
 corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
 
-# Simple linear regression model shows significant effects for both Moral Emotions and Moral Piggybacking
-m1 <- lm(moral_delta ~ pig_delta + emo_delta, data = df)
-summary(m1)
-performance::check_model(m1)
-AIC(m1)
-apa.reg.table(m1, filename = "m1.doc")
+# There are different ways to model the data - using change scores or using time 4 variables as predictors
 
-# re-run regression models using session 4 moralisation as DV and session 1 as a co-variate
+# Create dataframe for modelling
+wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, emo, moral, cog, hed, diss, att, emo_obj, cog_delta, emo_delta, pig_delta, moral_delta))
 
-# This shows that moralisation at session 1 is significant predictor of moralisation at session 4
+# METHOD 1. using CHANGE SCORES
 
-wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, emo, moral, pig_delta, emo_delta, moral_delta, cog_delta))
-
-m1.1 <- lm(moral_4 ~ moral_1, data = wide_df)
+m1.1 <- lm(moral_4 ~ moral_1, wide_df)
 summary(m1.1)
 performance::check_model(m1.1)
 AIC(m1.1)
-apa.reg.table(m1.1, filename = "m1_1.doc")
 
+# This shows that moralisation at session 1 is significant predictor of moralisation at session 4
 
-# When model1 is replicated using this method, emotions and piggybacking still significant
-
+# Emotions and piggybacking are significant (note: numbers after delta's are irrelevant)
 m1.2 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1, data = wide_df)
 summary(m1.2)
 performance::check_model(m1.2)
 AIC(m1.2)
-apa.reg.table(m1.2, filename = "m1_2.doc")
 
 # When moral cognitions added it is non-significant
-
 m1.3 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + cog_delta_1, data = wide_df)
 summary(m1.3)
 performance::check_model(m1.3)
 AIC(m1.3)
-apa.reg.table(m1.3, filename = "m1_3.doc")
+
+# METHOD 2: using timepoints
+
+m2.2 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4, data = wide_df)
+summary(m2.2)
+performance::check_model(m2.2)
+AIC(m2.2)
+
+# Moral cognition still not significant
+m2.3 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + cog_4, data = wide_df)
+summary(m2.3)
+performance::check_model(m2.3)
+AIC(m2.3)
 
 # REPEATED MEASURES ANOVA
 # Test assumptions; 1. Outliers - some outliers but none of them extreme (Values above Q3 + 3xIQR or below Q1 - 3xIQR are considered as extreme)
@@ -663,41 +689,43 @@ AIC(m4)
 
 tab_model(m2, m3, m4, file = "tab1.html")
 
+# Model outcome variable as Moralisation (4), with Moralisaion (1) as covariate
+
 # Adding other variables one by one to see impact on model fit
 
 # Attitude non-significant
-m5 <- lm(moral ~ emo + pig + att, df)
+m5 <- lm(moral_4 ~ moral_1 + emo_4 + pig_4 + att_4, wide_df)
 summary(m5)
 performance::check_model(m5)
 AIC(m5)
 
 # Hedonic Motivation non-significant
-m6 <- lm(moral ~ emo + pig + hed, df)
+m6 <- lm(moral_4 ~ moral_1 + emo_4 + pig_4 + hed_4, wide_df)
 summary(m6)
 performance::check_model(m6)
 AIC(m6)
 
 # Dissonance Reduction - non-significant
-m7 <- lm(moral ~ emo + pig + diss, df)
+m7 <- lm(moral_4 ~ moral_1 + emo_4 + pig_4 + diss_4, wide_df)
 summary(m7)
 performance::check_model(m7)
 AIC(m7)
 
-# Moral cognitions is significant by this measure and absorbs some Moral Emotions variance. m8 AIC score lower than m4
-m8 <- lm(moral ~ emo + pig + cog, df)
+# Moral cognitions is significant by this measure and absorbs some Moral Emotions variance.
+m8 <- lm(moral_4 ~ moral_1 + emo_4 + pig_4 + cog_4, wide_df)
 summary(m8)
 performance::check_model(m8)
 AIC(m8)
 
-# People Meotions non-significant
-m9 <- lm(moral ~ emo + pig + emo_obj, df)
+# People Emotions non-significant
+m9 <- lm(moral_4 ~ moral_1 + emo_4 + pig_4 + emo_obj_4, wide_df)
 summary(m9)
 performance::check_model(m9)
 AIC(m9)
 
 tab_model(m5, m6, m7, m8, file = "tab2.html")
 
-# Run model with cog + pig only -> AIC still  worse than m10
+# Run model with cog + pig only
 m10 <- lm(moral ~ emo + pig + cog, df)
 summary(m10)
 performance::check_model(m10)
@@ -991,7 +1019,8 @@ summary(cross.1.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
 
 labels1 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
               e1 = "Moral Emotions 1", e2 = "Moral Emotions 2", e3 = "Moral Emotions 3", e4 = "Moral Emotions 4")
-lavaanPlot::lavaanPlot(name = "title", cross.1.fit, , labels = labels1, coefs = TRUE)
+
+lavaanPlot::lavaanPlot(name = "title", cross.1.fit, labels = labels1, coefs = TRUE, sig = 0.05)
 
 
 # 2. MORALISATION and MORAL PIGGYBACKING
@@ -1001,26 +1030,25 @@ lavaanPlot::lavaanPlot(name = "title", cross.1.fit, , labels = labels1, coefs = 
 df %>% select(PID, moral, session, pig) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, pig)) %>% select(-PID)
 
 
-## extract data to work with -- m = moralization, e = moral piggybacking ##
+## extract data to work with -- m = moralization, p = moral piggybacking ##
 working.data <- df %>% select(PID, moral, session, pig) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, pig)) %>% select(-PID)
-names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'e1', 'e2', 'e3', 'e4')
-
-names(working.data)
-
+labels2 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+              p1 = "Moral Piggybacking 1", p2 = "Moral Piggybacking 2", p3 = "Moral Piggybacking 3", p4 = "Moral Piggybacking 4")
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'p1', 'p2', 'p3', 'p4')
 
 cross.2 <- '
-m2 ~ m1 + b1*e1
-m3 ~ m2 + b2*e2 + m1
-m4 ~ m3 + b3*e3 + m2
+m2 ~ m1 + b1*p1
+m3 ~ m2 + b2*p2 + m1
+m4 ~ m3 + b3*p3 + m2
 
-e2 ~ e1 + b4*m1
-e3 ~ e2 + b5*m2 + e1
-e4 ~ e3 + b6*m3 + e2
+p2 ~ p1 + b4*m1
+p3 ~ p2 + b5*m2 + p1
+p4 ~ p3 + b6*m3 + p2
 
-m1 ~~ e1
-m2 ~~ e2
-m3 ~~ e3
-m4 ~~ e4
+m1 ~~ p1
+m2 ~~ p2
+m3 ~~ p3
+m4 ~~ p4
 
 bb14 := b1-b4
 bb25 := b2-b5
@@ -1028,7 +1056,7 @@ bb36 := b3-b6'
 
 cross.2.fit <- lavaan(cross.2, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
 summary(cross.2.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
-lavaanPlot::lavaanPlot(name = "title", cross.1.fit, coefs = TRUE )
+lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2, coefs = TRUE, sig = 0.05)
 
 ```
 
