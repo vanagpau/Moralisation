@@ -940,7 +940,9 @@ AIC(m8)
 
 # IV = hed; mod = emo + pig
 med1 <- psych::mediate('behav_4', 'behav_1', m = c('emo_4', 'pig_4', 'moral_4'), data = wide_df)
-summary(med1)
+
+# ERROR here for some reason
+# summary(med1)
 
 mediate.diagram(med1, main = "")
 
@@ -986,7 +988,10 @@ bb36 := b3-b6'
 
 cross.1.fit <- lavaan(cross.1, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
 summary(cross.1.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
-lavaanPlot(name = "title", cross.1.fit)
+
+labels1 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+              e1 = "Moral Emotions 1", e2 = "Moral Emotions 2", e3 = "Moral Emotions 3", e4 = "Moral Emotions 4")
+lavaanPlot::lavaanPlot(name = "title", cross.1.fit, , labels = labels1, coefs = TRUE)
 
 
 # 2. MORALISATION and MORAL PIGGYBACKING
