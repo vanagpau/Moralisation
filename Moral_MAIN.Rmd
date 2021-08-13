@@ -336,6 +336,41 @@ df[,3:15] <- scale(df[,3:15])
 # report number of participants in analysis
 length(unique(df$PID))
 
+# Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
+df <- merge(df %>% filter(session == 4) %>% select(PID, moral), df %>%
+        filter(session == 1) %>% select(PID, moral), by = "PID") %>%
+        mutate(moral_delta = moral.x - moral.y) %>% 
+        select(PID, moral_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral piggybacking session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, pig), df %>%
+        filter(session == 1) %>% select(PID, pig), by = "PID") %>%
+        mutate(pig_delta = pig.x - pig.y) %>% 
+        select(PID, pig_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral emotions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, emo), df %>%
+        filter(session == 1) %>% select(PID, emo), by = "PID") %>%
+        mutate(emo_delta = emo.x - emo.y) %>% 
+        select(PID, emo_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in behavioural intentions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, behav), df %>%
+        filter(session == 1) %>% select(PID, behav), by = "PID") %>%
+        mutate(behav_delta = behav.x - behav.y) %>% 
+        select(PID, behav_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral cognitions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, cog), df %>%
+        filter(session == 1) %>% select(PID, cog), by = "PID") %>%
+        mutate(cog_delta = cog.x - cog.y) %>% 
+        select(PID, cog_delta) %>%
+        merge(., df, by = "PID")
+
 # have a nice cup of tea and a biscuit
 
 ```
@@ -379,6 +414,8 @@ powerSim(fit = m_sim, nsim = 100)
 
 # Normality: Shapiro-Wilk test per variable mean per session and plot histograms of each distribution for variables collected at all 4 time points (var_names4)
 
+df <- as_tibble(df)
+
 for (i in 1:4) {
 for (j in 1:length(var_names4)) {
 tmp <- shapiro.test(pull(df[df$session == i,var_names4[j]]))
@@ -414,13 +451,12 @@ ggplot(df[df$session == 4,"behav"], aes(x=behav)) +
   geom_histogram(binwidth = .5) +
   ggtitle(paste0("Session ",4)) + xlab("behav")
 
-
 # Normality QQ plots for for variables collected at all 4 time points (var_names4)
 
 qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
 
 for (i in 1:4) {
-mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS), var_names4)
+mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS, -MIS_I, -MIS_S), var_names4)
 }
 
 
@@ -523,40 +559,7 @@ xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3
 
 #### HYPOTHESIS 1: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted by moral emotions and moral piggybacking as measured by positive bi-variate correlation > 0.3.
 
-# Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
-df <- merge(df %>% filter(session == 4) %>% select(PID, moral), df %>%
-        filter(session == 1) %>% select(PID, moral), by = "PID") %>%
-        mutate(moral_delta = moral.x - moral.y) %>% 
-        select(PID, moral_delta) %>%
-        merge(., df, by = "PID")
 
-# Calculate change in moral piggybacking session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, pig), df %>%
-        filter(session == 1) %>% select(PID, pig), by = "PID") %>%
-        mutate(pig_delta = pig.x - pig.y) %>% 
-        select(PID, pig_delta) %>%
-        merge(., df, by = "PID")
-
-# Calculate change in moral emotions session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, emo), df %>%
-        filter(session == 1) %>% select(PID, emo), by = "PID") %>%
-        mutate(emo_delta = emo.x - emo.y) %>% 
-        select(PID, emo_delta) %>%
-        merge(., df, by = "PID")
-
-# Calculate change in behavioural intentions session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, behav), df %>%
-        filter(session == 1) %>% select(PID, behav), by = "PID") %>%
-        mutate(behav_delta = behav.x - behav.y) %>% 
-        select(PID, behav_delta) %>%
-        merge(., df, by = "PID")
-
-# Calculate change in moral cognitions session 4 - session 1 per participant and add to dataframe
-df <- merge(df %>% filter(session == 4) %>% select(PID, cog), df %>%
-        filter(session == 1) %>% select(PID, cog), by = "PID") %>%
-        mutate(cog_delta = cog.x - cog.y) %>% 
-        select(PID, cog_delta) %>%
-        merge(., df, by = "PID")
 
 #show in dataframe
 df %>% select(PID, moral_delta, emo_delta, pig_delta, behav_delta) %>% unique()
@@ -735,14 +738,34 @@ AIC(m10)
 
 
 
-# test traits - Moral self-identity
+# test traits - Moral self-identity: full-scale
 cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
-# test traits - Psychological reactance
-cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+# test traits - Moral self-identity: Internalisation scale
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS_I)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
+# test traits - Moral self-identity: Symbolisation scale
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS_S)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
+# test traits - HPRS: Psychological reactance
 
+# Show which variables are correlated with HPRS - key change variables (deltas)
+c1 <- df %>% filter(session == 1) %>% select(HPRS, cog_delta, behav_delta, moral_delta, emo_delta, pig_delta) %>% cor()
+# colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+# rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+
+# matrix of the p-value of the correlation with matched column and row names
+p.mat <- corrplot::cor.mtest(df %>% filter(session == 1) %>% select(HPRS, cog_delta, behav_delta, moral_delta, emo_delta, pig_delta))
+# colnames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+# rownames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+head(p.mat$p[, 1:5])
+
+# Correlation matrix shows no significant results for HPRS versus key change measures
+corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat$p, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
+
+# Also no relationship with change in Cognitive Dissonance or Hedonic Motivation
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss) - df %>% filter(session == 1) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(hed) - df %>% filter(session == 1) %>% select(hed)))
 
 
 ```
@@ -848,7 +871,7 @@ mediate.diagram(med4, main ="")
 
 
 # Note that emo/emo_obj shows a different result when emo is the mediator..
-med5 <- psych::mediate('moral', 'emo', m = c('emo_obj', 'pig'), data = df)
+med5 <- psych::mediate('Moralisation', 'Moral Emotions', m = c('People Emotions', 'Moral Piggybacking'), data = df)
 summary(med5)
 
 
@@ -968,9 +991,6 @@ AIC(m8)
 
 # IV = hed; mod = emo + pig
 med1 <- psych::mediate('behav_4', 'behav_1', m = c('emo_4', 'pig_4', 'moral_4'), data = wide_df)
-
-# ERROR here for some reason
-# summary(med1)
 
 mediate.diagram(med1, main = "")
 
