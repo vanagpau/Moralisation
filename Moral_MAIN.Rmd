@@ -763,8 +763,16 @@ head(p.mat$p[, 1:5])
 # Correlation matrix shows no significant results for HPRS versus key change measures
 corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat$p, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
 
-# Also no relationship with change in Cognitive Dissonance or Hedonic Motivation
+# No relationship with change in Cognitive Dissonance 
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss) - df %>% filter(session == 1) %>% select(diss)))
+
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 2) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 3) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss)))
+
+
+# No relationship with change in Hedonic Motivation
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(hed) - df %>% filter(session == 1) %>% select(hed)))
 
 
