@@ -643,7 +643,114 @@ corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(
 # Create dataframe for modelling
 wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, emo, moral, cog, hed, diss, att, emo_obj, cog_delta, emo_delta, pig_delta, moral_delta, diss_delta, hed_delta, emo_obj_delta, att_delta))
 
-# METHOD 2. using CHANGE SCORES
+# SET 1: Use all variables - IGNORE
+
+# # Modelling effect of time = session has significant effect (p < 0.005), but small (coeff = 0.18)
+# m2 <- lm(moral ~ session, df)
+# summary(m2)
+# performance::check_model(m2)
+# AIC(m2)
+# 
+# # effect of session disappears when a key variable (emo) is added
+# 
+# m3 <- lm(moral ~ session + emo, df)
+# summary(m3)
+# performance::check_model(m3)
+# AIC(m3)
+# 
+# m4 <- lm(moral ~ session + emo + pig, df)
+# summary(m4)
+# performance::check_model(m4)
+# AIC(m4)
+# 
+# tab_model(m2, m3, m4, file = "tab1.html")
+# 
+# # Adding other variables one by one to see impact on model fit
+# 
+# # Base model
+# m5 <- lm(moral ~ emo + pig, df)
+# summary(m5)
+# performance::check_model(m5)
+# AIC(m5)
+# 
+# # Moral cognitions is significant by this measure and absorbs some Moral Emotions variance.
+# m6 <- lm(moral ~ emo + pig + cog, df)
+# summary(m6)
+# performance::check_model(m6)
+# AIC(m6)
+# 
+# # Dissonance Reduction - non-significant
+# m7 <- lm(moral ~ emo + pig + cog + diss, df)
+# summary(m7)
+# performance::check_model(m7)
+# AIC(m7)
+# 
+# # Hedonic Motivation
+# m8 <- lm(moral ~ emo + pig + cog + hed, df)
+# summary(m8)
+# performance::check_model(m8)
+# AIC(m8)
+# 
+# # People Emotions non-significant
+# m9 <- lm(moral ~ emo + pig + cog + emo_obj, df)
+# summary(m9)
+# performance::check_model(m9)
+# AIC(m9)
+# 
+# tab_model(m5, m6, m7, m8, file = "tab2.html")
+# 
+# # Run model with cog + pig only
+# m10 <- lm(moral ~ emo + cog, df)
+# summary(m10)
+# performance::check_model(m10)
+# AIC(m10)
+
+# SET 2. using CHANGE-CHANGE SCORES - 
+
+# Emotions and piggybacking are significant (note: numbers after delta's are irrelevant)
+m1.2 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1, data = wide_df)
+summary(m1.2)
+performance::check_model(m1.2)
+AIC(m1.2)
+
+# When moral cognitions added it is non-significant
+m1.3 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + cog_delta_1, data = wide_df)
+summary(m1.3)
+performance::check_model(m1.3)
+AIC(m1.3)
+
+# Dissonance reduction not significant
+m1.4 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + diss_delta_1, data = wide_df)
+summary(m1.4)
+performance::check_model(m1.4)
+AIC(m1.4)
+
+# Hedonic motivation not significant
+m1.5 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + hed_delta_1, data = wide_df)
+summary(m1.5)
+performance::check_model(m1.5)
+AIC(m1.5)
+
+# ATTITUDE IS significant HERE
+m1.6 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + att_delta_1, data = wide_df)
+summary(m1.6)
+performance::check_model(m1.6)
+AIC(m1.6)
+
+# People Emotions not significant (but almost)
+m1.7 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + emo_obj_delta_1, data = wide_df)
+summary(m1.7)
+performance::check_model(m1.7)
+AIC(m1.7)
+
+tab_model(m1.2, m1.3, m1.6, file = "tab_delta1.html")
+
+
+
+
+
+
+# SET 2. using CHANGE-MORAL1 v MORAL4 SCORES
 
 m1.1 <- lm(moral_4 ~ moral_1, wide_df)
 summary(m1.1)
@@ -688,48 +795,47 @@ summary(m1.7)
 performance::check_model(m1.7)
 AIC(m1.7)
 
+tab_model(m1.1, m1.2, m1.3, m1.6, file = "tab_delta2.html")
 
-tab_model(m1.1, m1.2, m1.3, file = "tab_delta.html")
+# METHOD 3: using final timepoints - IGNORE THIS
 
-# METHOD 3: using final timepoints
-
-#Base model
-m2.1 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4, data = wide_df)
-summary(m2.1)
-performance::check_model(m2.1)
-AIC(m2.1)
-
-# Dissonance Reduction not significant
-m2.2 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + diss_4, data = wide_df)
-summary(m2.2)
-performance::check_model(m2.2)
-AIC(m2.2)
-
-# Moral cognition still not significant
-m2.3 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + cog_4, data = wide_df)
-summary(m2.3)
-performance::check_model(m2.3)
-AIC(m2.3)
-
-tab_model(m2.1, m2.3, file = "tab_set3.html")
-
-# Attitude not significant
-m2.4 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + att_4, data = wide_df)
-summary(m2.4)
-performance::check_model(m2.4)
-AIC(m2.4)
-
-# Hedonic motivation not significant
-m2.5 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + hed_4, data = wide_df)
-summary(m2.5)
-performance::check_model(m2.5)
-AIC(m2.5)
-
-# People Emotions not significant
-m2.6 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + emo_obj_4, data = wide_df)
-summary(m2.6)
-performance::check_model(m2.6)
-AIC(m2.6)
+# #Base model
+# m2.1 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4, data = wide_df)
+# summary(m2.1)
+# performance::check_model(m2.1)
+# AIC(m2.1)
+# 
+# # Dissonance Reduction not significant
+# m2.2 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + diss_4, data = wide_df)
+# summary(m2.2)
+# performance::check_model(m2.2)
+# AIC(m2.2)
+# 
+# # Moral cognition still not significant
+# m2.3 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + cog_4, data = wide_df)
+# summary(m2.3)
+# performance::check_model(m2.3)
+# AIC(m2.3)
+# 
+# tab_model(m2.1, m2.3, file = "tab_set3.html")
+# 
+# # Attitude not significant
+# m2.4 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + att_4, data = wide_df)
+# summary(m2.4)
+# performance::check_model(m2.4)
+# AIC(m2.4)
+# 
+# # Hedonic motivation not significant
+# m2.5 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + hed_4, data = wide_df)
+# summary(m2.5)
+# performance::check_model(m2.5)
+# AIC(m2.5)
+# 
+# # People Emotions not significant
+# m2.6 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + emo_obj_4, data = wide_df)
+# summary(m2.6)
+# performance::check_model(m2.6)
+# AIC(m2.6)
 
 
 
@@ -756,67 +862,6 @@ get_anova_table(rep.a1)
 # Multiple pair-wise t-tests show that moralisation significant from session 1 to 3 and 1 to 4
 df %>%  pairwise_t_test(moral ~ session, paired = TRUE,p.adjust.method = "bonferroni")
 
-# METHOD 1: Use all variables
-
-# Modelling effect of time = session has significant effect (p < 0.005), but small (coeff = 0.18)
-m2 <- lm(moral ~ session, df)
-summary(m2)
-performance::check_model(m2)
-AIC(m2)
-
-# effect of session disappears when a key variable (emo) is added
-
-m3 <- lm(moral ~ session + emo, df)
-summary(m3)
-performance::check_model(m3)
-AIC(m3)
-
-m4 <- lm(moral ~ session + emo + pig, df)
-summary(m4)
-performance::check_model(m4)
-AIC(m4)
-
-tab_model(m2, m3, m4, file = "tab1.html")
-
-# Adding other variables one by one to see impact on model fit
-
-# Base model
-m5 <- lm(moral ~ emo + pig, df)
-summary(m5)
-performance::check_model(m5)
-AIC(m5)
-
-# Moral cognitions is significant by this measure and absorbs some Moral Emotions variance.
-m6 <- lm(moral ~ emo + pig + cog, df)
-summary(m6)
-performance::check_model(m6)
-AIC(m6)
-
-# Dissonance Reduction - non-significant
-m7 <- lm(moral ~ emo + pig + cog + diss, df)
-summary(m7)
-performance::check_model(m7)
-AIC(m7)
-
-# Hedonic Motivation
-m8 <- lm(moral ~ emo + pig + cog + hed, df)
-summary(m8)
-performance::check_model(m8)
-AIC(m8)
-
-# People Emotions non-significant
-m9 <- lm(moral ~ emo + pig + cog + emo_obj, df)
-summary(m9)
-performance::check_model(m9)
-AIC(m9)
-
-tab_model(m5, m6, m7, m8, file = "tab2.html")
-
-# Run model with cog + pig only
-m10 <- lm(moral ~ emo + cog, df)
-summary(m10)
-performance::check_model(m10)
-AIC(m10)
 
 
 
