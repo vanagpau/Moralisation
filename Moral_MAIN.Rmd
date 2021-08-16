@@ -705,7 +705,7 @@ wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from =
 # performance::check_model(m10)
 # AIC(m10)
 
-# SET 2. using CHANGE-CHANGE SCORES - 
+# SET 1. using CHANGE-CHANGE SCORES - 
 
 # Emotions and piggybacking are significant (note: numbers after delta's are irrelevant)
 m1.2 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1, data = wide_df)
