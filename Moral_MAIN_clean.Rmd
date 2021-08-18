@@ -468,10 +468,15 @@ mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MI
 
 # Descriptive statistics
 wide_df_all <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = var_names)
-describe(wide_df_all) %>% kbl(digits = 2, format = "html") %>% save_kable("descriptives.html")
 
 # Show dataframe
 wide_df_all
+
+# save decriptives html table to file
+describe(wide_df_all) %>% kbl(digits = 2, format = "html") %>% save_kable("descriptives.html")
+
+# Show decriptives output
+describe(wide_df_all)
 
 
 # Scatter plots 
@@ -532,6 +537,7 @@ ggsave("rainbow.png", width = 10, height  = 5)
 moral_slopes <- xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"), xlab = "Session", ylab = "Moralisation", par.strip.text=list(cex=.5), par.settings=simpleTheme(col="red", col.line="blue"), scales=list(cex=0.5))
 moral_slopes
 
+# save the plot to file
 trellis.device(device="png", filename="xyplot.png")
 print(moral_slopes)
 dev.off()
