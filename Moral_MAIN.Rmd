@@ -937,7 +937,7 @@ cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(
 
 ```
 
-# Exploratory analyses I - mixed models
+# HYPOTHESIS II - mixed models
 ```{r}
 
 
@@ -980,7 +980,7 @@ tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
 
 ```
 
-## Exploratory Analyses II - mediating variables
+## Exploratory Analyses - mediating variables
 ```{r, include=TRUE, eval=FALSE}
 
 # Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
@@ -1007,50 +1007,52 @@ tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
 
 # Rename variables in dataframe for plotting
 names(df)[names(df) == 'moral'] <- 'Moralisation'
-names(df)[names(df) == 'pig'] <- 'Moral Piggybacking'
+names(df)[names(df) == 'pig'] <- 'Piggybacking'
 names(df)[names(df) == 'att'] <- 'Attitude'
-names(df)[names(df) == 'diss'] <- 'Dissonance Reduction'
-names(df)[names(df) == 'emo'] <- 'Moral Emotions'
-names(df)[names(df) == 'hed'] <- 'Hedonic Motivation'
-names(df)[names(df) == 'emo_obj'] <- 'People Emotions'
+names(df)[names(df) == 'diss'] <- 'Diss Redn'
+names(df)[names(df) == 'emo'] <- 'Moral Emtns'
+names(df)[names(df) == 'hed'] <- 'Hed Mtvn'
+names(df)[names(df) == 'emo_obj'] <- 'People Emtns'
+names(df)[names(df) == 'cog'] <- 'Cognitions'
 
 # IV = hed; mod = emo + pig
-med1 <- psych::mediate('Moralisation', 'Hedonic Motivation', m = c('Moral Emotions', 'Moral Piggybacking'), data = df)
-summary(med1)
+med1 <- psych::mediate('Moralisation', 'Hed Mtvn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med1)
 
 # IV = hed; mod = emo + pig
-med2 <- psych::mediate('Moralisation', 'Attitude', m = c('Moral Emotions', 'Moral Piggybacking'), data = df)
-summary(med2)
+med2 <- psych::mediate('Moralisation', 'Attitude', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med2)
 
 # IV = diss; mod = emo + pig
-med3 <- psych::mediate('Moralisation', 'Dissonance Reduction', m = c('Moral Emotions', 'Moral Piggybacking'), data = df)
-summary(med3)
+med3 <- psych::mediate('Moralisation', 'Diss Redn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med3)
 
 # IV = emo_obj; mod = emo + pig
-med4 <- psych::mediate('Moralisation', 'People Emotions', m = c('Moral Emotions', 'Moral Piggybacking'), data = df)
-summary(med4)
+med4 <- psych::mediate('Moralisation', 'People Emtns', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med4)
 
 
-mediate.diagram(med1, main = "c = Direct Effect; c' = Indirect Effect")
-mediate.diagram(med2, main ="")
-mediate.diagram(med3, main ="")
-mediate.diagram(med4, main ="")
+mediate.diagram(med1, main = "c = Direct Effect; c' = Indirect Effect", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+mediate.diagram(med2, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+mediate.diagram(med3, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+mediate.diagram(med4, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
 
 
 # Note that emo/emo_obj shows a different result when emo is the mediator..
-med5 <- psych::mediate('Moralisation', 'Moral Emotions', m = c('People Emotions', 'Moral Piggybacking'), data = df)
+med5 <- psych::mediate('Moralisation', 'Moral Emtns', m = c('People Emtns', 'Piggybacking'), data = df)
 summary(med5)
 
 
 # Change variable names back
 names(df)[names(df) == 'Moralisation'] <- 'moral'
-names(df)[names(df) == 'Moral Piggybacking'] <- 'pig'
+names(df)[names(df) == 'Piggybacking'] <- 'pig'
 names(df)[names(df) == 'Attitude'] <- 'att'
-names(df)[names(df) == 'Dissonance Reduction'] <- 'diss'
-names(df)[names(df) == 'Moral Emotions'] <- 'emo'
-names(df)[names(df) == 'Hedonic Motivation'] <- 'hed'
-names(df)[names(df) == 'People Emotions'] <- 'emo_obj'
+names(df)[names(df) == 'Diss Redn'] <- 'diss'
+names(df)[names(df) == 'Moral Emtns'] <- 'emo'
+names(df)[names(df) == 'Hed Mtvn'] <- 'hed'
+names(df)[names(df) == 'People Emtns'] <- 'emo_obj'
+names(df)[names(df) == 'Cognitions'] <- 'cog'
 
 ```
 
