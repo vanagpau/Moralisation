@@ -1,0 +1,1319 @@
+---
+title: "Moralisation_MAIN"
+author: "Paul Vanags"
+date: "10/06/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+```{r, message=FALSE, warning=FALSE}
+
+library(kableExtra)
+library(psych)
+library(car)
+library(RColorBrewer)
+library(lme4)
+library(lattice)
+library(faux)
+library(simr)
+library(rstatix)
+library(ggpubr)
+library(lavaan)
+library(apaTables)
+library(sjPlot)
+library(kableExtra)
+library(data.table)
+library(tidyverse)
+
+
+```
+
+
+## Import data
+```{r, message = FALSE, warning=FALSE}
+
+#clear workspace
+rm(list = ls())
+
+#laptop working directory
+#setwd("/home/vanagpau/R/Moralisation/MAIN actual data") 
+
+#desktop working directory
+setwd("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/MAIN actual data") 
+
+# extract 4 character identifier for each questionnaire node
+nam <- str_sub(list.files(pattern = "questionnaire"), -8, -5)
+
+# combine all matching nodes: ONLY USE FOR NEW DATA
+# for (i in seq(1:length(nam))) {
+#   #read in each file, remove additional event as per text and combine all common questionnaire nodes
+#   df_temp <- list.files(pattern = nam[i]) %>% lapply(read_csv, na = c("Unexpectedly long close out at end of task!", "NA")) %>% bind_rows()
+#     df_temp <- df_temp %>% filter(`Event Index` != "END OF FILE") %>%
+#     filter(`Question Key` != "END QUESTIONNAIRE" &  `Question Key` != "BEGIN QUESTIONNAIRE",
+#            !grepl("quantised", `Question Key`) ) %>%
+#   select(`Participant Private ID`, `Question Key`, Response, `Tree Node Key`)# remove all END OF FILE lines
+#     colnames(df_temp)[colnames(df_temp)=="Participant Private ID"] <- "PID" #shorten col name to PID
+#     assign(paste0("n_",nam[i]), df_temp) #assign df to the name of the dataframe created above
+#     write_csv(df_temp, file = paste0("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/Main study CSVs/","n_",nam[i],".csv"))
+# }
+
+# For existing data read in csv files for dataframes (much faster for knitting)
+for (i in seq(1:length(unique(nam)))) {
+  df_temp <- read_csv(paste0("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/Main study CSVs/","n_",nam[i],".csv"))
+  assign(paste0("n_",nam[i]), df_temp)
+}
+
+#remove unnecessary dfs from environment (consent, debrief nodes, explainer, survey code pages etc)
+rm(n_1dbi,n_o3u2, n_q986, n_1dbi, n_8941, n_gbx3)
+
+#remove df_temp from workspace to prevent double counting
+rm(df_temp)
+
+
+
+```
+## Data wrangle
+```{r}
+
+
+# replace categorical answers with numeric
+n_4kh5$Response <- str_replace_all(n_4kh5$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
+n_k47v$Response <- str_replace_all(n_k47v$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
+n_sjbg$Response <- str_replace_all(n_sjbg$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
+n_wxzl$Response <- str_replace_all(n_wxzl$Response, c(
+    "Not at all opposed" = "1", "Slightly opposed" = "2", "Somewhat opposed" = "3", "Strongly opposed" = "4")) %>%
+  as.numeric()
+
+
+
+# Reverse score item MIS4
+n_ubog[n_ubog$`Question Key` == "MIS4",'Response'] <- n_ubog %>% filter(`Question Key`== "MIS4") %>% select(Response) %>% transmute(Response = 6 - Response)
+
+# Remove incorrect items MIS3 and MIS5
+n_ubog <- n_ubog %>% filter(`Question Key` == "MIS1" | `Question Key` == "MIS2" | `Question Key` == "MIS4" | `Question Key` == "MIS6" | `Question Key` == "MIS7" | `Question Key` == "MIS8" | `Question Key` == "MIS9" | `Question Key` == "MIS10")
+
+
+
+
+
+
+# Reverse score item diss7 (across 4 spreadsheet/nodes)
+n_hhto[n_hhto$`Question Key` == "diss7",'Response'] <- n_hhto %>% filter(`Question Key`== "diss7") %>% select(Response) %>% transmute(Response = 6 - Response)
+n_zd7j[n_zd7j$`Question Key` == "diss7",'Response'] <- n_zd7j %>% filter(`Question Key`== "diss7") %>% select(Response) %>% transmute(Response = 6 - Response)
+n_luva[n_luva$`Question Key` == "diss7",'Response'] <- n_luva %>% filter(`Question Key`== "diss7") %>% select(Response) %>% transmute(Response = 6 - Response)
+n_zm3i[n_zm3i$`Question Key` == "diss7",'Response'] <- n_zm3i %>% filter(`Question Key`== "diss7") %>% select(Response) %>% transmute(Response = 6 - Response)
+
+
+# Add session no. info to the dataframes
+n_4kh5$session <- 2
+n_5hpk$session <- 3
+n_9opr$session <- 2
+n_auod$session <- 1
+n_daab$session <- 2
+n_fhoy$session <- 1
+n_hhto$session <- 1
+n_k47v$session <- 4
+n_l8iw$session <- 4
+n_lpz3$session <- 3
+n_luva$session <- 3
+n_okdo$session <- 1
+n_p34a$session <- 1
+n_sjbg$session <- 1
+n_t7dh$session <- 1
+n_txy2$session <- 2
+n_ubog$session <- 1
+n_vacc$session <- 3
+n_wkz6$session <- 4
+n_wxzl$session <- 3
+n_xdo3$session <- 4
+n_xuky$session <- 4
+n_zd7j$session <- 2
+n_zm3i$session <- 4
+
+## Calculate mean scores for variables within individual dataframes (one variable / dataframe)
+
+
+#create list of dataframes (as strings)
+dflist <- Filter(function(x) is.data.frame(get(x)), ls())
+
+# create list of variable names to search for
+var_names <- c("cog", "att", "pig", "hed", "HPRS", "moral", "diss", "emo", "emo_obj", "behav", "MIS")
+
+# Cronbach alpha to check reliability of scales by session
+
+# Create data frame where each column is a test/questionnaire item, each row is a person
+df_all <- bind_rows(Filter(function(x) is(x, "data.frame"), mget(ls())))
+df_all <- df_all %>% group_by(`PID`) %>% pivot_wider(id_cols = PID, names_from = c(`Question Key`, session), values_from = Response) %>% ungroup () 
+
+# list of variables at all 4 time points
+var_names4 <- c("cog", "att", "pig", "hed", "moral", "diss", "emo", "emo_obj")
+
+# Run Cronbach alpha on each questionnaire - detected using regex string matching
+
+# # Moral cognition 1
+a1 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?1$")])
+summary(a1)
+# Moral cognition 2
+a2 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?2$")])
+summary(a2)
+# Moral cognition 3
+a3 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?3$")])
+summary(a3)
+# Moral cognition 4
+a4 <- psych::alpha(df_all[,str_detect(colnames(df_all), "cog.*?4$")])
+summary(a4)
+# Attitude 1
+a5 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?1$")])
+summary(a5)
+# Attitude 2
+a6 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?2$")])
+summary(a6)
+# Attitude 3
+a7 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?3$")])
+summary(a7)
+# Attitude 4
+a8 <- psych::alpha(df_all[,str_detect(colnames(df_all), "att.*?4$")])
+summary(a8)
+# Moral piggybacking 1
+a9 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?1$")])
+summary(a9)
+# Moral piggybacking 2
+a10 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?2$")])
+summary(a10)
+# Moral piggybacking 3
+a11 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?3$")])
+summary(a11)
+# Moral piggybacking 4
+a12 <- psych::alpha(df_all[,str_detect(colnames(df_all), "pig.*?4$")])
+summary(a12)
+# Hedonic motivation 1
+a13 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?1$")])
+summary(a13)
+# Hedonic motivation 2
+a14 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?2$")])
+summary(a14)
+# Hedonic motivation 3
+a15 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?3$")])
+summary(a15)
+# Hedonic motivation 4
+a16 <- psych::alpha(df_all[,str_detect(colnames(df_all), "hed.*?4$")])
+summary(a16)
+# Moralisation 1
+a17 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?1$")])
+summary(a17)
+# Moralisation 2
+a18 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?2$")])
+summary(a18)
+# Moralisation 3
+a19 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?3$")])
+summary(a19)
+# Moralisation 4
+a20 <- psych::alpha(df_all[,str_detect(colnames(df_all), "moral.*?4$")])
+summary(a20)
+# Dissonance Reduction 1
+a21 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?1$")])
+summary(a21)
+# Dissonance Reduction 2
+a22 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?2$")])
+summary(a22)
+# Dissonance Reduction 3
+a23 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?3$")])
+summary(a23)
+# Dissonance Reduction 4
+a24 <- psych::alpha(df_all[,str_detect(colnames(df_all), "diss.*?4$")])
+summary(a24)
+# Moral emotions 1
+a25 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?1$")])
+summary(a25)
+# Moral emotions 2
+a26 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?2$")])
+summary(a26)
+# Moral emotions 3
+a27 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?3$")])
+summary(a27)
+# Moral emotions 4
+a28 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo.*?4$")])
+summary(a28)
+# Moral emotions (objects) 1
+a29 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?1$")])
+summary(a29)
+# Moral emotions (objects) 2
+a30 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?2$")])
+summary(a30)
+# Moral emotions (objects) 3
+a31 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?3$")])
+summary(a31)
+# Moral emotions (objects) 4
+a32 <- psych::alpha(df_all[,str_detect(colnames(df_all), "emo_obj.*?4$")])
+summary(a32)
+
+# HPRS
+a33 <- psych::alpha(df_all[,str_detect(colnames(df_all), "HPRS")])
+summary(a33)
+# # MIS
+a34 <- psych::alpha(df_all[,str_detect(colnames(df_all), "MIS")])
+summary(a34)
+# 
+# # Behavioural intentions 1
+a35 <- psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?1$")])
+summary(a35)
+# # Behavioural intentions 2
+a36 <- psych::alpha(df_all[,str_detect(colnames(df_all), "behav.*?4$")])
+summary(a36)
+
+
+
+
+
+# Create function to calculate variable mean scores
+fn_var <- function(d, s1) {
+ nam <- paste0(s1, get(d)[1,5]) #create dataframe name from input dataframe and variable string
+ #filter and mutate to create new dataframe by looking for the string s1 in Question Key column
+ df_temp <<- get(d) %>% group_by(`PID`) %>% filter(str_detect(`Question Key`, s1) == TRUE) %>% mutate("{s1}" := mean(Response)) %>% select(PID, session, {s1}) %>% distinct()
+ if (nrow(df_temp) == 0) return(NULL) #if no data in dataframe (ie. string s1 doesn't exist in this dataframe) then end function
+ assign(nam, df_temp, envir = .GlobalEnv) #otherwise assign new dataframe to global environment ie. outside of local function
+}
+
+# Apply this function across all dataframes and variable names
+for (i in 1:length(var_names)) {
+lapply(dflist, fn_var, s1 = var_names[i] )
+}
+
+# Create 2 new dataframes for MSI sub-scales
+# Internalisation
+MIS_I <- n_ubog %>% filter(`Question Key` == "MIS1" | `Question Key` == "MIS2" | `Question Key` == "MIS4" | `Question Key` == "MIS6")
+# Symbolisation
+MIS_S <- n_ubog %>% filter(`Question Key` == "MIS7" | `Question Key` == "MIS8" | `Question Key` == "MIS9" | `Question Key` == "MIS10")
+
+# Reshape to fit including means
+MIS_I <- MIS_I %>% group_by(PID) %>% mutate("MIS_I" := mean(Response)) %>% select(PID, session, MIS_I) %>% distinct()
+
+MIS_S <- MIS_S %>% group_by(PID) %>% mutate("MIS_S" := mean(Response)) %>% select(PID, session, MIS_S) %>% distinct()
+
+# remove old dataframes
+rm(list = dflist)
+rm(df_temp)
+
+#bind all common variables together
+t1 <- rbind(att1, att2, att3, att4)
+t2 <- rbind(behav1, behav4)
+t3 <- rbind(cog1, cog2, cog3, cog4)
+t4 <- rbind(diss1, diss2, diss3, diss4)
+t5 <- rbind(emo_obj1, emo_obj2, emo_obj3, emo_obj4)
+t6 <- rbind(emo1, emo2, emo3, emo4)
+t7 <- rbind(hed1, hed2, hed3, hed4)
+t8 <- rbind(moral1, moral2, moral3, moral4)
+t9 <- rbind(pig1, pig2, pig3, pig4)
+
+# create final dataframe by column binding t1-t9 matching by participant ID and session number
+df <- plyr::join_all(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, MIS1, MIS_I, MIS_S, HPRS1), by=c("PID", "session"), type='left') %>% ungroup()
+
+# Convert PID to factor from numeric
+df$PID <- as.factor(df$PID)
+
+# Remove any participants without complete data
+complete <- df %>% select(PID, session) %>% pivot_wider(names_from = session, values_from = session) %>% na.omit() %>% select(PID) %>% pull()
+
+df <- df %>% filter(PID %in% complete)
+
+#Report descriptives of HPRS and MSI
+describe(df$HPRS)
+describe(df$MIS)
+
+# Standardise all variables
+df[,3:15] <- scale(df[,3:15])
+
+# report number of participants in analysis
+length(unique(df$PID))
+
+# Calculate change in moralisation session 4 - session 1 per participant and add to dataframe = DEPENDENT VARIABLE
+df <- merge(df %>% filter(session == 4) %>% select(PID, moral), df %>%
+        filter(session == 1) %>% select(PID, moral), by = "PID") %>%
+        mutate(moral_delta = moral.x - moral.y) %>% 
+        select(PID, moral_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral piggybacking session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, pig), df %>%
+        filter(session == 1) %>% select(PID, pig), by = "PID") %>%
+        mutate(pig_delta = pig.x - pig.y) %>% 
+        select(PID, pig_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral emotions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, emo), df %>%
+        filter(session == 1) %>% select(PID, emo), by = "PID") %>%
+        mutate(emo_delta = emo.x - emo.y) %>% 
+        select(PID, emo_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in behavioural intentions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, behav), df %>%
+        filter(session == 1) %>% select(PID, behav), by = "PID") %>%
+        mutate(behav_delta = behav.x - behav.y) %>% 
+        select(PID, behav_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in moral cognitions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, cog), df %>%
+        filter(session == 1) %>% select(PID, cog), by = "PID") %>%
+        mutate(cog_delta = cog.x - cog.y) %>% 
+        select(PID, cog_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in dissonance reduction session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, diss), df %>%
+        filter(session == 1) %>% select(PID, diss), by = "PID") %>%
+        mutate(diss_delta = diss.x - diss.y) %>% 
+        select(PID, diss_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in People Emotions session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, emo_obj), df %>%
+        filter(session == 1) %>% select(PID, emo_obj), by = "PID") %>%
+        mutate(emo_obj_delta = emo_obj.x - emo_obj.y) %>% 
+        select(PID, emo_obj_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in ATTITUDE session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, att), df %>%
+        filter(session == 1) %>% select(PID, att), by = "PID") %>%
+        mutate(att_delta = att.x - att.y) %>% 
+        select(PID, att_delta) %>%
+        merge(., df, by = "PID")
+
+# Calculate change in HEDONIC MOTIVATION session 4 - session 1 per participant and add to dataframe
+df <- merge(df %>% filter(session == 4) %>% select(PID, hed), df %>%
+        filter(session == 1) %>% select(PID, hed), by = "PID") %>%
+        mutate(hed_delta = hed.x - hed.y) %>% 
+        select(PID, hed_delta) %>%
+        merge(., df, by = "PID")
+
+
+# have a nice cup of tea and a biscuit
+
+```
+
+## Power calculation
+```{r, eval=FALSE, include=FALSE}
+
+# simulate dataset based on 8 participants data to 1,000 ppts
+  
+for (i in 1:length(var_names4)) {
+  df_temp <- sim_df(df, n = 1000, id ="PID", within = "session", dv = var_names4[i]) %>% pivot_longer(2:5, names_to = "session", values_to = var_names4[i])
+  # Add new data frame from this file to overall data frame
+  if (i == 1) {df_sim <- df_temp} else {df_sim <- merge(df_sim, df_temp, by = c("PID", "session"))}
+}
+
+df_sim$PID <- as.factor(df_sim$PID)
+df_sim$session <- as.numeric(df_sim$session)
+
+m_sim <- lmer(moral ~ session + (session|PID), data = df_sim)
+
+fixef(m_sim)["pig"] <- 0.2
+fixef(m_sim)["emo"] <- 0.2
+fixef(m_sim)["att"] <- 0.2
+
+powerSim(fit = m_sim, nsim = 100)
+ 
+# simr::powerSim(fit = m_sim, test = compare(m_sim_null, method = "lr"), nsim = 100)
+
+```
+
+
+
+
+
+## Assumption checks
+```{r}
+
+# plots of variables by session
+# ggplot(df[df$session == 4,var_names4[8]], aes(x=emo_obj)) + geom_histogram(binwidth = .5)
+
+
+# Normality: Shapiro-Wilk test per variable mean per session and plot histograms of each distribution for variables collected at all 4 time points (var_names4)
+
+df <- as_tibble(df)
+
+for (i in 1:4) {
+for (j in 1:length(var_names4)) {
+tmp <- shapiro.test(pull(df[df$session == i,var_names4[j]]))
+print(paste0("Session number ",i,", variable  ",var_names4[j]))
+if (tmp$p.value < .05) {print(tmp)
+  print(ggplot(df[df$session == i,var_names4[j]], aes(x=get(var_names4[j]))) +
+        geom_histogram(binwidth = .3) + ggtitle(paste0("Session ",i)) +
+  xlab(var_names4[j]))}
+else  print(tmp)
+}
+}
+
+# Shapiro-Wilk test for other variables (HPRS, MIS, behavioural intentions)
+shapiro.test(pull(df[df$session == 1,"HPRS"]))
+shapiro.test(pull(df[df$session == 1,"MIS"]))
+shapiro.test(pull(df[df$session == 1,"behav"]))
+shapiro.test(pull(df[df$session == 4,"behav"]))
+
+#Plots for other variables (HPRS, MIS, behavioural intentions)
+ggplot(df[df$session == 1,"HPRS"], aes(x=HPRS)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",1)) + xlab("HPRS")
+
+ggplot(df[df$session == 1,"MIS"], aes(x=MIS)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",1)) + xlab("MIS")
+
+ggplot(df[df$session == 1,"behav"], aes(x=behav)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",1)) + xlab("behav")
+
+ggplot(df[df$session == 4,"behav"], aes(x=behav)) +
+  geom_histogram(binwidth = .5) +
+  ggtitle(paste0("Session ",4)) + xlab("behav")
+
+# Tidied up example plot for inclusion in thesis
+ggplot(df[df$session == 3,"cog"], aes(x=cog)) +
+  geom_histogram(binwidth = .5) + xlab("Moral Cognition") + ylab("Count")
+
+# Normality QQ plots for for variables collected at all 4 time points (var_names4)
+
+qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
+
+for (i in 1:4) {
+mapply(qq_fn, df %>% filter(session == i) %>% select(-session, -PID, -behav, -MIS, -HPRS, -MIS_I, -MIS_S), var_names4)
+}
+
+
+```
+
+## Data descritpives and visualisation
+```{r}
+
+# Descriptive statistics
+wide_df_all <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = var_names)
+describe(wide_df_all) %>% kbl(digits = 2, format = "html") %>% save_kable("descriptives.html")
+
+# Scatter plots 
+
+# create scatter plot function
+#df %>% ggplot(aes(x = att, y = moral)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)
+
+scat <- function (x, y) {df %>% 
+    ggplot(aes_string(x = x, y = y)) + geom_smooth(method = lm) + geom_point() + facet_wrap(~session)}
+
+# Apply to all 4 time-point variables with moralisation as y-variable
+lapply(var_names4, scat, y = "moral")
+
+# Scatter plot of moralisation at time 1 vs behavioural intentions at time 1
+df %>% filter(session == 1) %>% select(moral, behav) %>% ggplot(aes(x = behav, y = moral)) + geom_point() + geom_smooth(method = lm)
+# Correlation
+df %>% filter(session == 1) %>% select(moral, behav) %>% cor_test(moral, behav)
+
+# Scatter plot of moralisation at time 4 vs behavioural intentions at time 4
+df %>% filter(session == 4) %>% select(moral, behav) %>% ggplot(aes(x = behav, y = moral)) + geom_point() + geom_smooth(method = lm)
+# Correlation
+df %>% filter(session == 4) %>% select(moral, behav) %>% cor_test(moral, behav)
+
+# Scatter plot of dissonance reduction at time 1 vs behavioural intentions at time 1
+df %>% filter(session == 1) %>% select(diss, behav) %>% ggplot(aes(x = diss, y = behav)) + geom_point() + geom_smooth(method = lm)
+# Correlation
+df %>% filter(session == 1) %>% select(diss, behav) %>% cor_test(diss, behav)
+
+# Scatter plot of dissonance reduction at time 4 vs behavioural intentions at time 4
+df %>% filter(session == 4) %>% select(diss, behav) %>% ggplot(aes(x = diss, y = behav)) + geom_point() + geom_smooth(method = lm)
+# Correlation
+df %>% filter(session == 4) %>% select(diss, behav) %>% cor_test(diss, behav)
+
+# Dissonance reduction has a MORE NEGATIVE correlation with behavioural intention at time 4 versus time 1
+# So test to see if difference in r values is significant = NO
+paired.r(-.35, -.48, n = 43)
+
+# Plot of key variables grand mean over each time point
+
+df %>% select(PID, session, var_names4) %>% 
+  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
+  group_by(session, variable) %>% transmute(value = mean(value)) %>% unique() %>%
+  ggplot(aes(x = session, y = value)) + geom_point(aes(color = variable), size = 3) +
+  geom_line(aes(color = variable), size = 1.3) +
+  scale_color_brewer(palette = "Spectral") + theme_bw()
+
+# create vector of session 1 means to use in rebased chart
+session1 <- rep(df %>% select(PID, session, var_names4) %>% 
+  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
+  group_by(session, variable) %>% transmute(value = mean(value)) %>% unique() %>% ungroup() %>% 
+  filter (session == 1) %>% select(value) %>% pull(), times = 4)
+
+#Create rebased chart
+df %>% select(PID, session, var_names4) %>% 
+  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
+  group_by(session, variable) %>%  transmute(value = mean(value)) %>%  unique() %>% cbind(baseline = session1) %>%
+  transmute(value = value - baseline) %>%
+  ggplot(aes(x = session, y = value)) + geom_point(aes(color = variable), size = 3) +
+  geom_line(aes(color = variable), size = 1.3) +
+  scale_color_hue(labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
+                                                      "Moral Emotions", "People Emotions", "Hedonic Motivation",
+                                                      "Moralisation", "Moral Piggybacking")) + theme_bw() +
+  xlab("Session") + ylab("Standardised mean score (all participants)") + theme(legend.title=element_blank()) 
+
+
+  
+#Create rebased chart (with error bars)
+df %>% select(PID, session, var_names4) %>%
+  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
+  group_by(session, variable)  %>% mutate(se = sd(value)/sqrt(length(value))) %>%
+  mutate(mean = mean(value)) %>% filter(!duplicated(se)) %>% cbind(baseline = session1) %>%
+  mutate(rebased_mean = mean - baseline) %>%
+  ggplot(aes(x = session, y = rebased_mean, color = variable)) +
+  geom_point(size = 3, position=position_dodge(0.2)) +
+  geom_line(size = 1.3, position=position_dodge(0.2)) +
+  geom_errorbar(aes(ymin=rebased_mean - se, ymax = rebased_mean + se), width=.1, position=position_dodge(0.2)) +
+  scale_color_hue(labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
+                                                      "Moral Emotions", "People Emotions", "Hedonic Motivation",
+                                                      "Moralisation", "Moral Piggybacking")) + theme_bw() +
+  xlab("Session") + ylab("Standardised mean score (all participants)") + theme(legend.title=element_blank()) 
+
+ggsave("rainbow.png", width = 10, height  = 5)
+
+
+# Plot of hedonic motivation variable distribution by session
+
+df %>% ggplot(aes(x = hed)) + geom_histogram(binwidth = .1) + facet_wrap(~session)
+
+
+# Plot of each variable by participant
+
+# create function for spaghetti plots - note: these don't really show anything
+# spag_plot <- function(x) {
+#   df %>% select(PID, session, x) %>% 
+#   pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>% 
+#   group_by(PID, session) %>% transmute(value = mean(value)) %>%
+#   ggplot(aes(x = session, y = value, group = PID)) + geom_point(size = 2) +
+#   geom_line(size = 0.5) + theme_bw() + ggtitle(x)
+# }
+# 
+# lapply(var_names4, spag_plot)
+
+# Random slopes per participant
+moral_slopes <- xyplot(moral ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"), xlab = "Session", ylab = "Moralisation", par.strip.text=list(cex=.5), par.settings=simpleTheme(col="red", col.line="blue"), scales=list(cex=0.5))
+moral_slopes
+
+trellis.device(device="png", filename="xyplot.png")
+print(moral_slopes)
+dev.off()
+
+xyplot(att ~ session|PID, data = df, type = c("r", "p"), xlim = c("1", "2", "3", "4"), xlab = "Session", ylab = "Attitude")
+
+
+
+```
+
+## Hypothesis testing
+```{r}
+
+#### HYPOTHESIS 1: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted by moral emotions and moral piggybacking as measured by positive bi-variate correlation > 0.3.
+
+
+
+#show in dataframe
+df %>% select(PID, moral_delta, emo_delta, pig_delta, behav_delta) %>% unique()
+
+# Scatter plots
+df %>% ggplot(aes(x = emo_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm) + theme_classic() + xlab("Change in Moral Emotions (Session 4 - Session 1)") + ylab("Change in Moralisation (Session 4 - Session 1)")
+df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm) + theme_classic() + xlab("Change in Moral Piggybacking (Session 4 - Session 1)") + ylab("Change in Moralisation (Session 4 - Session 1)")
+df %>% ggplot(aes(x = pig_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+df %>% ggplot(aes(x = behav_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+df %>% ggplot(aes(x = cog_delta, y = moral_delta)) + geom_point() + geom_smooth(method = lm)
+
+# Correlation of change in moralisation versus change in moral piggybacking
+cor.test (pull(df %>% filter(session == 4) %>% select(moral) - df %>% filter(session == 1) %>% select(moral)), pull(df %>% filter(session ==4) %>% select(pig) - df %>% filter(session ==1) %>% select(pig)))
+
+# Correlation of change in moralisation versus change in moral emotions
+cor.test (pull(df %>% filter(session ==4) %>% select(moral) - df %>% filter(session == 1) %>% select(moral)), pull(df %>% filter(session ==4) %>% select(emo) - df %>% filter(session ==1) %>% select(emo)))
+
+
+#### HYPOTHESIS 2: The change in moralisation, from the first measurement in session 1 to the final measurement in session 4, is predicted most effectively by only moral emotions and moral piggybacking.
+
+# Show which variables are correlated with moralisation = all of them
+c1 <- df %>% select(var_names4) %>% cor()
+colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+
+# Function to create matrix of p-values to add significance data to correlation matrix
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+
+# matrix of the p-value of the correlation with matched column and row names
+p.mat <- cor.mtest(df %>% select(var_names4))
+colnames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+rownames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+head(p.mat[, 1:5])
+
+corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
+
+# There are different ways to model the data - using change scores or using time 4 variables as predictors
+
+# Create dataframe for modelling
+wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, emo, moral, cog, hed, diss, att, emo_obj, cog_delta, emo_delta, pig_delta, moral_delta, diss_delta, hed_delta, emo_obj_delta, att_delta))
+
+# SET 1: Use all variables - IGNORE
+
+# # Modelling effect of time = session has significant effect (p < 0.005), but small (coeff = 0.18)
+# m2 <- lm(moral ~ session, df)
+# summary(m2)
+# performance::check_model(m2)
+# AIC(m2)
+# 
+# # effect of session disappears when a key variable (emo) is added
+# 
+# m3 <- lm(moral ~ session + emo, df)
+# summary(m3)
+# performance::check_model(m3)
+# AIC(m3)
+# 
+# m4 <- lm(moral ~ session + emo + pig, df)
+# summary(m4)
+# performance::check_model(m4)
+# AIC(m4)
+# 
+# tab_model(m2, m3, m4, file = "tab1.html")
+# 
+# # Adding other variables one by one to see impact on model fit
+# 
+# # Base model
+# m5 <- lm(moral ~ emo + pig, df)
+# summary(m5)
+# performance::check_model(m5)
+# AIC(m5)
+# 
+# # Moral cognitions is significant by this measure and absorbs some Moral Emotions variance.
+# m6 <- lm(moral ~ emo + pig + cog, df)
+# summary(m6)
+# performance::check_model(m6)
+# AIC(m6)
+# 
+# # Dissonance Reduction - non-significant
+# m7 <- lm(moral ~ emo + pig + cog + diss, df)
+# summary(m7)
+# performance::check_model(m7)
+# AIC(m7)
+# 
+# # Hedonic Motivation
+# m8 <- lm(moral ~ emo + pig + cog + hed, df)
+# summary(m8)
+# performance::check_model(m8)
+# AIC(m8)
+# 
+# # People Emotions non-significant
+# m9 <- lm(moral ~ emo + pig + cog + emo_obj, df)
+# summary(m9)
+# performance::check_model(m9)
+# AIC(m9)
+# 
+# tab_model(m5, m6, m7, m8, file = "tab2.html")
+# 
+# # Run model with cog + pig only
+# m10 <- lm(moral ~ emo + cog, df)
+# summary(m10)
+# performance::check_model(m10)
+# AIC(m10)
+
+# SET 1. using CHANGE-CHANGE SCORES - 
+
+# Emotions and piggybacking are significant (note: numbers after delta's are irrelevant)
+m1.2 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1, data = wide_df)
+summary(m1.2)
+performance::check_model(m1.2)
+AIC(m1.2)
+
+# When moral cognitions added it is non-significant
+m1.3 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + cog_delta_1, data = wide_df)
+summary(m1.3)
+performance::check_model(m1.3)
+AIC(m1.3)
+
+# Dissonance reduction not significant
+m1.4 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + diss_delta_1, data = wide_df)
+summary(m1.4)
+performance::check_model(m1.4)
+AIC(m1.4)
+
+# Hedonic motivation not significant
+m1.5 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + hed_delta_1, data = wide_df)
+summary(m1.5)
+performance::check_model(m1.5)
+AIC(m1.5)
+
+# ATTITUDE IS significant HERE
+m1.6 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + att_delta_1, data = wide_df)
+summary(m1.6)
+performance::check_model(m1.6)
+AIC(m1.6)
+
+# People Emotions not significant (but almost)
+m1.7 <- lm(moral_delta_1 ~ pig_delta_1 + emo_delta_1 + emo_obj_delta_1, data = wide_df)
+summary(m1.7)
+performance::check_model(m1.7)
+AIC(m1.7)
+
+tab_model(m1.2, m1.3, m1.6, file = "tab_delta1.html")
+
+
+
+
+
+
+# SET 2. using CHANGE-MORAL1 v MORAL4 SCORES
+
+m1.1 <- lm(moral_4 ~ moral_1, wide_df)
+summary(m1.1)
+performance::check_model(m1.1)
+AIC(m1.1)
+
+# This shows that moralisation at session 1 is significant predictor of moralisation at session 4
+
+# Emotions and piggybacking are significant (note: numbers after delta's are irrelevant)
+m1.2 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1, data = wide_df)
+summary(m1.2)
+performance::check_model(m1.2)
+AIC(m1.2)
+
+# When moral cognitions added it is non-significant
+m1.3 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + cog_delta_1, data = wide_df)
+summary(m1.3)
+performance::check_model(m1.3)
+AIC(m1.3)
+
+# Dissonance reduction not significant
+m1.4 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + diss_delta_1, data = wide_df)
+summary(m1.4)
+performance::check_model(m1.4)
+AIC(m1.4)
+
+# Hedonic motivation not significant
+m1.5 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + hed_delta_1, data = wide_df)
+summary(m1.5)
+performance::check_model(m1.5)
+AIC(m1.5)
+
+# ATTITUDE not significant (but almost)
+m1.6 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + att_delta_1, data = wide_df)
+summary(m1.6)
+performance::check_model(m1.6)
+AIC(m1.6)
+
+# People Emotions not significant (but almost)
+m1.7 <- lm(moral_4 ~ moral_1 + pig_delta_1 + emo_delta_1 + emo_obj_delta_1, data = wide_df)
+summary(m1.7)
+performance::check_model(m1.7)
+AIC(m1.7)
+
+tab_model(m1.1, m1.2, m1.3, m1.6, file = "tab_delta2.html")
+
+# METHOD 3: using final timepoints - IGNORE THIS
+
+# #Base model
+# m2.1 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4, data = wide_df)
+# summary(m2.1)
+# performance::check_model(m2.1)
+# AIC(m2.1)
+# 
+# # Dissonance Reduction not significant
+# m2.2 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + diss_4, data = wide_df)
+# summary(m2.2)
+# performance::check_model(m2.2)
+# AIC(m2.2)
+# 
+# # Moral cognition still not significant
+# m2.3 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + cog_4, data = wide_df)
+# summary(m2.3)
+# performance::check_model(m2.3)
+# AIC(m2.3)
+# 
+# tab_model(m2.1, m2.3, file = "tab_set3.html")
+# 
+# # Attitude not significant
+# m2.4 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + att_4, data = wide_df)
+# summary(m2.4)
+# performance::check_model(m2.4)
+# AIC(m2.4)
+# 
+# # Hedonic motivation not significant
+# m2.5 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + hed_4, data = wide_df)
+# summary(m2.5)
+# performance::check_model(m2.5)
+# AIC(m2.5)
+# 
+# # People Emotions not significant
+# m2.6 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + emo_obj_4, data = wide_df)
+# summary(m2.6)
+# performance::check_model(m2.6)
+# AIC(m2.6)
+
+
+
+# REPEATED MEASURES ANOVA
+# Test assumptions; 1. Outliers - some outliers but none of them extreme (Values above Q3 + 3xIQR or below Q1 - 3xIQR are considered as extreme)
+
+for (i in 1:4){
+  for (j in 1:length(var_names4)) {
+print(identify_outliers(df %>% filter(session == i) %>% select(var_names4[j])))
+  }
+}
+
+# 2. Normality - moralisation is non-normal at times points 3 and 4 (see Assumptions section above)
+
+# 3. Mauchly's test of sphericity is conducted when anova_test used
+
+df %>% group_by(session) %>% get_summary_stats(moral, type = "mean_sd")
+ggboxplot(df, x = "session", y = c("moral"), add = "jitter")
+
+# Repeated measures ANOVA shows significant, but small effect of time (GES = generalised effect size https://www.psy.gla.ac.uk/~steve/best/effect.html)
+rep.a1 <- anova_test(data = df, dv = moral, wid = PID, within = session)
+get_anova_table(rep.a1)
+
+# Multiple pair-wise t-tests show that moralisation significant from session 1 to 3 and 1 to 4
+df %>%  pairwise_t_test(moral ~ session, paired = TRUE,p.adjust.method = "bonferroni")
+
+
+
+
+
+
+# test traits - Moral self-identity: full-scale
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
+# test traits - Moral self-identity: Internalisation scale
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS_I)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
+# test traits - Moral self-identity: Symbolisation scale
+cor.test(pull(df %>% filter(session == 1) %>% select(MIS_S)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
+
+# test traits - HPRS: Psychological reactance
+
+# Show which variables are correlated with HPRS - key change variables (deltas)
+c1 <- df %>% filter(session == 1) %>% select(HPRS, cog_delta, behav_delta, moral_delta, emo_delta, pig_delta) %>% cor()
+# colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+# rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+
+# matrix of the p-value of the correlation with matched column and row names
+p.mat <- corrplot::cor.mtest(df %>% filter(session == 1) %>% select(HPRS, cog_delta, behav_delta, moral_delta, emo_delta, pig_delta))
+# colnames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+# rownames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+head(p.mat$p[, 1:5])
+
+# Correlation matrix shows no significant results for HPRS versus key change measures
+corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat$p, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
+
+# No relationship with change in Cognitive Dissonance 
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss) - df %>% filter(session == 1) %>% select(diss)))
+
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 2) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 3) %>% select(diss)))
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss)))
+
+
+# No relationship with change in Hedonic Motivation
+cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(hed) - df %>% filter(session == 1) %>% select(hed)))
+
+
+```
+
+# HYPOTHESIS II - mixed models
+```{r}
+
+
+# MIXED MODELS
+
+# NOTE: to do the mixed models accurately for session should time be converted to a continuous variable??
+
+# Null model
+mm1 <- lmer(moral ~ session|PID, data = df)
+summary(mm1)
+performance::check_model(mm1)
+plot_model(mm1, type = "re", show.intercept = FALSE)
+
+# Create linear model with independent predictors
+mm2 <- lmer(moral ~ emo + pig + cog + (session|PID), data = df)
+summary(mm2)
+plot(mm2)
+performance::check_model(mm2)
+plot_model(mm2, type = "re", show.intercept = FALSE)
+plot_model(mm2, type = "std", show.values = TRUE)
+
+anova(mm1, mm2)
+
+mm3 <- lmer(moral ~ emo + pig + cog + diss + (session|PID), data = df)
+summary(mm3)
+plot(mm3)
+anova(mm2, mm3)
+
+mm4 <- lmer(moral ~ emo + pig + cog + hed + (session|PID), data = df)
+summary(mm4)
+performance::check_model(mm4)
+anova(mm4, mm2)
+
+mm5 <- lmer(moral ~ emo + pig + cog + att + (session|PID), data = df)
+summary(mm5)
+performance::check_model(mm5)
+anova(mm5, mm2)
+
+tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
+
+```
+
+## Exploratory Analyses - mediating variables
+```{r, include=TRUE, eval=FALSE}
+
+# Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
+
+# Test whether Moral Emotions mediates other variables using mediate package
+
+# Do moral piggybacking and moral cognitions mediate the other variables?
+
+# #model direct effect of IV's on DV
+# direct.m1 <- lm(moral ~ att + hed + diss, df)
+# summary(direct.m1)
+# 
+# #model effect of IV's on mediator variable - Moral emotions
+# step1.m1 <- lm(emo ~ att + hed + diss, df) 
+# summary(step1.m1)
+# 
+# # model effect of mediator variables on DV, controlling for IV's
+# total.m1 <- lm(moral ~ emo + att + diss + hed, df)
+# summary(step2.m1)
+
+# These analyses show that the effect of moral cognitions is PARTIALLY mediated by Moral Emotions, as the direct relationship is lowered when emotions is present, but moral piggybacking is partially negatively mediated by moral emotions
+
+# Using mediate function of psych package
+
+# Rename variables in dataframe for plotting
+names(df)[names(df) == 'moral'] <- 'Moralisation'
+names(df)[names(df) == 'pig'] <- 'Piggybacking'
+names(df)[names(df) == 'att'] <- 'Attitude'
+names(df)[names(df) == 'diss'] <- 'Diss Redn'
+names(df)[names(df) == 'emo'] <- 'Moral Emtns'
+names(df)[names(df) == 'hed'] <- 'Hed Mtvn'
+names(df)[names(df) == 'emo_obj'] <- 'People Emtns'
+names(df)[names(df) == 'cog'] <- 'Cognitions'
+
+# IV = hed; mod = emo + pig
+med1 <- psych::mediate('Moralisation', 'Hed Mtvn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med1)
+
+# IV = hed; mod = emo + pig
+med2 <- psych::mediate('Moralisation', 'Attitude', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med2)
+
+# IV = diss; mod = emo + pig
+med3 <- psych::mediate('Moralisation', 'Diss Redn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med3)
+
+# IV = emo_obj; mod = emo + pig
+med4 <- psych::mediate('Moralisation', 'People Emtns', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
+#summary(med4)
+
+
+mediate.diagram(med1, main = "c = Direct Effect; c' = Indirect Effect", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+mediate.diagram(med2, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+mediate.diagram(med3, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+mediate.diagram(med4, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+
+
+# Note that People Emotions doesn't affect moralisation when subbed for Moral Emotions..
+med5 <- psych::mediate('Moralisation', 'Moral Emtns', m = c('People Emtns', 'Piggybacking'), data = df)
+summary(med5)
+
+#Testing whether Moral Cognitions is mediated by ME/MP
+med6 <- psych::mediate('Moralisation', 'Cognitions', m = c('Moral Emtns', 'Piggybacking'), data = df)
+summary(med6)
+mediate.diagram(med6, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+#Testing whether Moral Emotions is mediated by MC/MP
+med7 <- psych::mediate('Moralisation', 'Moral Emtns', m = c('Cognitions', 'Piggybacking'), data = df)
+summary(med7)
+mediate.diagram(med7, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+#Testing whether Moral Piggybacking is mediated by ME/MC
+med8 <- psych::mediate('Moralisation', 'Piggybacking', m = c('Moral Emtns', 'Cognitions'), data = df)
+summary(med8)
+mediate.diagram(med8, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+
+
+# Change variable names back
+names(df)[names(df) == 'Moralisation'] <- 'moral'
+names(df)[names(df) == 'Piggybacking'] <- 'pig'
+names(df)[names(df) == 'Attitude'] <- 'att'
+names(df)[names(df) == 'Diss Redn'] <- 'diss'
+names(df)[names(df) == 'Moral Emtns'] <- 'emo'
+names(df)[names(df) == 'Hed Mtvn'] <- 'hed'
+names(df)[names(df) == 'People Emtns'] <- 'emo_obj'
+names(df)[names(df) == 'Cognitions'] <- 'cog'
+
+```
+
+# Exploratory Analyses III: Behavioural Intentions
+```{r}
+
+df <- as_tibble(df)
+
+# Correlation matrix of predictor variables with change in behavioural intentions (delta_behav)
+
+# Show which variables are correlated with moralisation = all of them
+c2 <- df %>% select(PID, session, var_names4, behav) %>%
+  filter(session == 1 | session == 4) %>%
+  pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, att, cog, moral, diss, hed, emo, emo_obj, behav)) %>%
+  select(-c(PID, pig_1, att_1, moral_1, cog_1, diss_1, hed_1, emo_1, emo_obj_1)) %>%
+  cor()
+colnames(c2) <- c("Moral Piggybacking 4", "Attitude 4", "Moral Cognitions 4", "Moralisation 4", "Dissonance Reduction 4", "Hedonic Motivations 4", "Moral Emotions 4", "People Emotions 4", "Behavioural Intentions 1", "Behavioural Intentions 4")
+rownames(c2) <- c("Moral Piggybacking 4", "Attitude 4", "Moral Cognitions 4", "Moralisation 4", "Dissonance Reduction 4", "Hedonic Motivations 4", "Moral Emotions 4", "People Emotions 4", "Behavioural Intentions 1", "Behavioural Intentions 4")
+
+# Function to create matrix of p-values to add significance data to correlation matrix
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+
+# matrix of the p-value of the correlation with matched column and row names
+p.mat <- cor.mtest(df %>% select(PID, session, var_names4, behav) %>%
+  filter(session == 1 | session == 4) %>%
+  pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, att, cog, moral, diss, hed, emo, emo_obj, behav)) %>%
+  select(-c(PID, pig_1, att_1, moral_1, cog_1, diss_1, hed_1, emo_1, emo_obj_1)))
+colnames(p.mat) <- c("Moral Piggybacking 4", "Attitude 4", "Moral Cognitions 4", "Moralisation 4", "Dissonance Reduction 4", "Hedonic Motivations 4", "Moral Emotions 4", "People Emotions 4", "Behavioural Intentions 1", "Behavioural Intentions 4")
+rownames(p.mat) <- c("Moral Piggybacking 4", "Attitude 4", "Moral Cognitions 4", "Moralisation 4", "Dissonance Reduction 4", "Hedonic Motivations 4", "Moral Emotions 4", "People Emotions 4", "Behavioural Intentions 1", "Behavioural Intentions 4")
+
+corrplot::corrplot(c2, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, number.cex = .75, diag = FALSE)
+
+# Fit linear models
+
+wide_df <- df %>% select(PID, session, var_names4, behav) %>%
+  filter(session == 1 | session == 4) %>%
+  pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, att, cog, moral, diss, hed, emo, emo_obj, behav)) %>%
+  select(-c(pig_1, att_1, moral_1, cog_1, diss_1, hed_1, emo_1, emo_obj_1))
+
+# Model 1
+m1 <- lm(behav_4 ~ behav_1, wide_df)
+summary(m1)
+performance::check_model(m1)
+AIC(m1)
+
+# Model 2
+m2 <- lm(behav_4 ~ behav_1 + pig_4, wide_df)
+summary(m2)
+performance::check_model(m2)
+AIC(m2)
+
+# Model 3
+m3 <- lm(behav_4 ~ behav_1 + pig_4 + emo_4, wide_df)
+summary(m3)
+performance::check_model(m3)
+AIC(m3)
+
+# Model 4
+m4 <- lm(behav_4 ~ behav_1 + pig_4 + emo_4 + moral_4, wide_df)
+summary(m4)
+performance::check_model(m4)
+AIC(m4)
+
+tab_model(m1, m2, m3, m4, file = "tab3.html")
+
+# Check remaining variables
+
+# Model 5
+m5 <- lm(behav_4 ~ behav_1 + pig_4 + emo_4 + emo_obj_4, wide_df)
+summary(m5)
+performance::check_model(m5)
+AIC(m5)
+
+# Model 6
+m6 <- lm(behav_4 ~ behav_1 + pig_4 + emo_4 + diss_4, wide_df)
+summary(m6)
+performance::check_model(m6)
+AIC(m6)
+
+# Model 7
+m7 <- lm(behav_4 ~ behav_1 + pig_4 + emo_4 + hed_4, wide_df)
+summary(m7)
+performance::check_model(m7)
+AIC(m7)
+
+# Model 8
+m8 <- lm(behav_4 ~ behav_1 + pig_4 + emo_4 + att_4, wide_df)
+summary(m8)
+performance::check_model(m8)
+AIC(m8)
+
+
+# Mediation analysis question: does moralisation mediate behaviour?
+
+# Rename variables in dataframe for plotting
+names(wide_df)[names(wide_df) == 'behav_4'] <- 'Behaviour (4)'
+names(wide_df)[names(wide_df) == 'behav_1'] <- 'Behaviour (1)'
+names(wide_df)[names(wide_df) == 'emo_4'] <- 'Moral Emotions (4)'
+names(wide_df)[names(wide_df) == 'pig_4'] <- 'Moral Piggybacking (4)'
+names(wide_df)[names(wide_df) == 'moral_4'] <- 'Moralisation (4)'
+
+
+# IV = hed; mod = emo + pig
+med1 <- psych::mediate('Behaviour (4)', 'Behaviour (1)', m = c('Moral Emotions (4)', 'Moral Piggybacking (4)', 'Moralisation (4)'), data = wide_df)
+
+mediate.diagram(med1, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+
+
+
+```
+
+
+# Exploratory Analyses IV: Cross-lagged panel analysis
+```{r}
+
+# 1. MORALISATION and MORAL EMOTIONS
+
+# make dataframe into wide format
+df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
+
+
+## extract data to work with -- m = moralization, e = moral emotions ##
+working.data <- df %>% select(PID, moral, session, emo) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, emo)) %>% select(-PID)
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'e1', 'e2', 'e3', 'e4')
+
+names(working.data)
+
+
+cross.1 <- '
+m2 ~ m1 + b1*e1
+m3 ~ m2 + b2*e2 + m1
+m4 ~ m3 + b3*e3 + m2
+
+e2 ~ e1 + b4*m1
+e3 ~ e2 + b5*m2 + e1
+e4 ~ e3 + b6*m3 + e2
+
+m1 ~~ e1
+m2 ~~ e2
+m3 ~~ e3
+m4 ~~ e4
+
+bb14 := b1-b4
+bb25 := b2-b5
+bb36 := b3-b6'
+
+cross.1.fit <- lavaan(cross.1, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.1.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
+
+labels1 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+              e1 = "Moral Emotions 1", e2 = "Moral Emotions 2", e3 = "Moral Emotions 3", e4 = "Moral Emotions 4")
+
+lavaanPlot::lavaanPlot(name = "title", cross.1.fit, labels = labels1, coefs = TRUE, sig = 0.05)
+
+
+# 2. MORALISATION and MORAL PIGGYBACKING
+
+
+# make dataframe into wide format
+df %>% select(PID, moral, session, pig) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, pig)) %>% select(-PID)
+
+
+## extract data to work with -- m = moralization, p = moral piggybacking ##
+working.data <- df %>% select(PID, moral, session, pig) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, pig)) %>% select(-PID)
+labels2 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+              p1 = "Moral Piggybacking 1", p2 = "Moral Piggybacking 2", p3 = "Moral Piggybacking 3", p4 = "Moral Piggybacking 4")
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'p1', 'p2', 'p3', 'p4')
+
+cross.2 <- '
+m2 ~ m1 + b1*p1
+m3 ~ m2 + b2*p2 + m1
+m4 ~ m3 + b3*p3 + m2
+
+p2 ~ p1 + b4*m1
+p3 ~ p2 + b5*m2 + p1
+p4 ~ p3 + b6*m3 + p2
+
+m1 ~~ p1
+m2 ~~ p2
+m3 ~~ p3
+m4 ~~ p4
+
+bb14 := b1-b4
+bb25 := b2-b5
+bb36 := b3-b6'
+
+cross.2.fit <- lavaan(cross.2, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.2.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
+lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2, coefs = TRUE, sig = 0.05)
+
+
+
+
+
+# 3. MORALISATION and MORAL COGNITIONS
+
+
+# make dataframe into wide format
+df %>% select(PID, moral, session, cog) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, cog)) %>% select(-PID)
+
+
+## extract data to work with -- m = moralization, p = moral cognitions ##
+working.data <- df %>% select(PID, moral, session, cog) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, cog)) %>% select(-PID)
+labels2 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+              p1 = "Moral Cognitions 1", p2 = "Moral Cognitions 2", p3 = "Moral Cognitions 3", p4 = "Moral Cognitions 4")
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'p1', 'p2', 'p3', 'p4')
+
+cross.3 <- '
+m2 ~ m1 + b1*p1
+m3 ~ m2 + b2*p2 + m1
+m4 ~ m3 + b3*p3 + m2
+
+p2 ~ p1 + b4*m1
+p3 ~ p2 + b5*m2 + p1
+p4 ~ p3 + b6*m3 + p2
+
+m1 ~~ p1
+m2 ~~ p2
+m3 ~~ p3
+m4 ~~ p4
+
+bb14 := b1-b4
+bb25 := b2-b5
+bb36 := b3-b6'
+
+cross.3.fit <- lavaan(cross.3, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.3.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
+lavaanPlot::lavaanPlot(name = "title", cross.3.fit, labels = labels2, coefs = TRUE, sig = 0.05)
+
+
+```
