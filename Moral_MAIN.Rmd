@@ -569,13 +569,13 @@ df %>% select(PID, session, var_names4) %>%
 #Create rebased chart (with error bars)
 df %>% select(PID, session, var_names4) %>%
   pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
-  group_by(session, variable)  %>% mutate(se = sd(value)/length(value)) %>%
+  group_by(session, variable)  %>% mutate(se = sd(value)/sqrt(length(value))) %>%
   mutate(mean = mean(value)) %>% filter(!duplicated(se)) %>% cbind(baseline = session1) %>%
   mutate(rebased_mean = mean - baseline) %>%
-  ggplot(aes(x = session, y = rebased_mean, color = variable), position=position_dodge(0.2)) +
-  geom_point(size = 3) +
-  geom_line(size = 1.3) +
-  geom_errorbar(aes(ymin=rebased_mean - se, ymax = rebased_mean + se), color = "grey", width=.1) +
+  ggplot(aes(x = session, y = rebased_mean, color = variable)) +
+  geom_point(size = 3, position=position_dodge(0.2)) +
+  geom_line(size = 1.3, position=position_dodge(0.2)) +
+  geom_errorbar(aes(ymin=rebased_mean - se, ymax = rebased_mean + se), width=.1, position=position_dodge(0.2)) +
   scale_color_hue(labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
                                                       "Moral Emotions", "People Emotions", "Hedonic Motivation",
                                                       "Moralisation", "Moral Piggybacking")) + theme_bw() +
