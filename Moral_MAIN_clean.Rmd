@@ -781,31 +781,13 @@ tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
 ```
 
 ## Exploratory Analyses - mediating variables
-```{r, include=TRUE, eval=FALSE}
+```{r}
 
 # Mediation effects: Feinberg paper found that moral piggybacking and moral emotions mediated effects of other variables
 
-# Test whether Moral Emotions mediates other variables using mediate package
-
-# Do moral piggybacking and moral cognitions mediate the other variables?
-
-# #model direct effect of IV's on DV
-# direct.m1 <- lm(moral ~ att + hed + diss, df)
-# summary(direct.m1)
-# 
-# #model effect of IV's on mediator variable - Moral emotions
-# step1.m1 <- lm(emo ~ att + hed + diss, df) 
-# summary(step1.m1)
-# 
-# # model effect of mediator variables on DV, controlling for IV's
-# total.m1 <- lm(moral ~ emo + att + diss + hed, df)
-# summary(step2.m1)
-
-# These analyses show that the effect of moral cognitions is PARTIALLY mediated by Moral Emotions, as the direct relationship is lowered when emotions is present, but moral piggybacking is partially negatively mediated by moral emotions
-
 # Using mediate function of psych package
 
-# Rename variables in dataframe for plotting
+# Rename variables in dataframe for producing plots for use in thesis
 names(df)[names(df) == 'moral'] <- 'Moralisation'
 names(df)[names(df) == 'pig'] <- 'Piggybacking'
 names(df)[names(df) == 'att'] <- 'Attitude'
@@ -817,31 +799,28 @@ names(df)[names(df) == 'cog'] <- 'Cognitions'
 
 # IV = hed; mod = emo + pig
 med1 <- psych::mediate('Moralisation', 'Hed Mtvn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
-#summary(med1)
+med1
+mediate.diagram(med1, main = "c = Direct Effect; c' = Indirect Effect", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
 # IV = hed; mod = emo + pig
 med2 <- psych::mediate('Moralisation', 'Attitude', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
-#summary(med2)
+med2
+mediate.diagram(med2, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
 # IV = diss; mod = emo + pig
 med3 <- psych::mediate('Moralisation', 'Diss Redn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
-#summary(med3)
+med3
+mediate.diagram(med3, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
 # IV = emo_obj; mod = emo + pig
 med4 <- psych::mediate('Moralisation', 'People Emtns', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
-#summary(med4)
-
-
-mediate.diagram(med1, main = "c = Direct Effect; c' = Indirect Effect", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
-mediate.diagram(med2, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
-mediate.diagram(med3, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+med4
 mediate.diagram(med4, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
-
-
 
 # Note that People Emotions doesn't affect moralisation when subbed for Moral Emotions..
 med5 <- psych::mediate('Moralisation', 'Moral Emtns', m = c('People Emtns', 'Piggybacking'), data = df)
-summary(med5)
+med5
+mediate.diagram(med5, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
 #Testing whether Moral Cognitions is mediated by ME/MP
 med6 <- psych::mediate('Moralisation', 'Cognitions', m = c('Moral Emtns', 'Piggybacking'), data = df)
@@ -875,11 +854,9 @@ names(df)[names(df) == 'Cognitions'] <- 'cog'
 # Exploratory Analyses III: Behavioural Intentions
 ```{r}
 
-df <- as_tibble(df)
-
 # Correlation matrix of predictor variables with change in behavioural intentions (delta_behav)
 
-# Show which variables are correlated with moralisation = all of them
+# Show which variables are correlated with moralisation 
 c2 <- df %>% select(PID, session, var_names4, behav) %>%
   filter(session == 1 | session == 4) %>%
   pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, att, cog, moral, diss, hed, emo, emo_obj, behav)) %>%
@@ -888,7 +865,7 @@ c2 <- df %>% select(PID, session, var_names4, behav) %>%
 colnames(c2) <- c("Moral Piggybacking 4", "Attitude 4", "Moral Cognitions 4", "Moralisation 4", "Dissonance Reduction 4", "Hedonic Motivations 4", "Moral Emotions 4", "People Emotions 4", "Behavioural Intentions 1", "Behavioural Intentions 4")
 rownames(c2) <- c("Moral Piggybacking 4", "Attitude 4", "Moral Cognitions 4", "Moralisation 4", "Dissonance Reduction 4", "Hedonic Motivations 4", "Moral Emotions 4", "People Emotions 4", "Behavioural Intentions 1", "Behavioural Intentions 4")
 
-# Function to create matrix of p-values to add significance data to correlation matrix
+# Function to create matrix of p-values to add significance data to correlation matrix (in case running this chunk alone)
 cor.mtest <- function(mat, ...) {
     mat <- as.matrix(mat)
     n <- ncol(mat)
@@ -916,10 +893,15 @@ corrplot::corrplot(c2, method = "circle", order = "FPC", col = colorRampPalette(
 
 # Fit linear models
 
+#create the data-frame
 wide_df <- df %>% select(PID, session, var_names4, behav) %>%
   filter(session == 1 | session == 4) %>%
   pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, att, cog, moral, diss, hed, emo, emo_obj, behav)) %>%
   select(-c(pig_1, att_1, moral_1, cog_1, diss_1, hed_1, emo_1, emo_obj_1))
+
+# Show data-frame
+wide_df
+str(wide_df)
 
 # Model 1
 m1 <- lm(behav_4 ~ behav_1, wide_df)
@@ -1010,7 +992,7 @@ names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'e1', 'e2', 'e3', 'e4')
 
 names(working.data)
 
-
+# code from Feinberg et al
 cross.1 <- '
 m2 ~ m1 + b1*e1
 m3 ~ m2 + b2*e2 + m1
