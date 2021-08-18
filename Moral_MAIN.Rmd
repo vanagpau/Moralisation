@@ -480,6 +480,10 @@ ggplot(df[df$session == 4,"behav"], aes(x=behav)) +
   geom_histogram(binwidth = .5) +
   ggtitle(paste0("Session ",4)) + xlab("behav")
 
+# Tidied up example plot for inclusion in thesis
+ggplot(df[df$session == 3,"cog"], aes(x=cog)) +
+  geom_histogram(binwidth = .5) + xlab("Moral Cognition") + ylab("Count")
+
 # Normality QQ plots for for variables collected at all 4 time points (var_names4)
 
 qq_fn <- function(x, y) qqPlot(x, main = paste(y, "QQ Plot", sep = " ", "Session", i))
@@ -551,34 +555,33 @@ session1 <- rep(df %>% select(PID, session, var_names4) %>%
 #Create rebased chart
 df %>% select(PID, session, var_names4) %>% 
   pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
-  group_by(session, variable) %>%  transmute(value = mean(value)) %>%  unique() %>% cbind(session1) %>%
-  transmute(value = value - ...4) %>%
+  group_by(session, variable) %>%  transmute(value = mean(value)) %>%  unique() %>% cbind(baseline = session1) %>%
+  transmute(value = value - baseline) %>%
   ggplot(aes(x = session, y = value)) + geom_point(aes(color = variable), size = 3) +
   geom_line(aes(color = variable), size = 1.3) +
-  scale_color_brewer(palette = "Spectral", labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
+  scale_color_hue(labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
+                                                      "Moral Emotions", "People Emotions", "Hedonic Motivation",
+                                                      "Moralisation", "Moral Piggybacking")) + theme_bw() +
+  xlab("Session") + ylab("Standardised mean score (all participants)") + theme(legend.title=element_blank()) 
+
+
+  
+#Create rebased chart (with error bars)
+df %>% select(PID, session, var_names4) %>%
+  pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
+  group_by(session, variable)  %>% mutate(se = sd(value)/length(value)) %>%
+  mutate(mean = mean(value)) %>% filter(!duplicated(se)) %>% cbind(baseline = session1) %>%
+  mutate(rebased_mean = mean - baseline) %>%
+  ggplot(aes(x = session, y = rebased_mean, color = variable), position=position_dodge(0.2)) +
+  geom_point(size = 3) +
+  geom_line(size = 1.3) +
+  geom_errorbar(aes(ymin=rebased_mean - se, ymax = rebased_mean + se), color = "grey", width=.1) +
+  scale_color_hue(labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
                                                       "Moral Emotions", "People Emotions", "Hedonic Motivation",
                                                       "Moralisation", "Moral Piggybacking")) + theme_bw() +
   xlab("Session") + ylab("Standardised mean score (all participants)") + theme(legend.title=element_blank()) 
 
 ggsave("rainbow.png", width = 10, height  = 5)
-  
-#Create rebased chart (with error bars) - NOT WORKING YET
-# df %>% select(PID, session, var_names4) %>% 
-#   pivot_longer(cols = !PID & !session, names_to = "variable", values_to = "value") %>%
-#   group_by(session, variable)  %>% mutate(sd = sd(value)) %>%
-#   mutate(mean = mean(value)) %>%  unique() %>% cbind(session1) %>%
-#   transmute(value = value - ...4) %>%
-#   ggplot(aes(x = session, y = value)) + geom_point(aes(color = variable), size = 3) +
-#   geom_line(aes(color = variable), size = 1.3) +
-#   scale_color_brewer(palette = "Spectral", labels = c("Attitude", "Moral Cognitions", "Dissonance Reduction",
-#                                                       "Moral Emotions", "People Emotions", "Hedonic Motivation",
-#                                                       "Moralisation", "Moral Piggybacking")) + theme_bw() +
-#   xlab("Session") + ylab("Standardised mean score (all participants)") + theme(legend.title=element_blank()) +
-#     geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
-#                  position=position_dodge(0.05))
-
-
-
 
 
 # Plot of hedonic motivation variable distribution by session
@@ -1039,9 +1042,25 @@ mediate.diagram(med4, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
 
 
-# Note that emo/emo_obj shows a different result when emo is the mediator..
+# Note that People Emotions doesn't affect moralisation when subbed for Moral Emotions..
 med5 <- psych::mediate('Moralisation', 'Moral Emtns', m = c('People Emtns', 'Piggybacking'), data = df)
 summary(med5)
+
+#Testing whether Moral Cognitions is mediated by ME/MP
+med6 <- psych::mediate('Moralisation', 'Cognitions', m = c('Moral Emtns', 'Piggybacking'), data = df)
+summary(med6)
+mediate.diagram(med6, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+#Testing whether Moral Emotions is mediated by MC/MP
+med7 <- psych::mediate('Moralisation', 'Moral Emtns', m = c('Cognitions', 'Piggybacking'), data = df)
+summary(med7)
+mediate.diagram(med7, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
+#Testing whether Moral Piggybacking is mediated by ME/MC
+med8 <- psych::mediate('Moralisation', 'Piggybacking', m = c('Moral Emtns', 'Cognitions'), data = df)
+summary(med8)
+mediate.diagram(med8, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
+
 
 
 # Change variable names back
@@ -1157,6 +1176,7 @@ summary(m8)
 performance::check_model(m8)
 AIC(m8)
 
+
 # Mediation analysis question: does moralisation mediate behaviour?
 
 # Rename variables in dataframe for plotting
@@ -1256,5 +1276,44 @@ cross.2.fit <- lavaan(cross.2, data = working.data, auto.var = TRUE, fixed.x=FAL
 summary(cross.2.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
 lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2, coefs = TRUE, sig = 0.05)
 
-```
 
+
+
+
+# 3. MORALISATION and MORAL COGNITIONS
+
+
+# make dataframe into wide format
+df %>% select(PID, moral, session, cog) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, cog)) %>% select(-PID)
+
+
+## extract data to work with -- m = moralization, p = moral cognitions ##
+working.data <- df %>% select(PID, moral, session, cog) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, cog)) %>% select(-PID)
+labels2 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+              p1 = "Moral Cognitions 1", p2 = "Moral Cognitions 2", p3 = "Moral Cognitions 3", p4 = "Moral Cognitions 4")
+names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'p1', 'p2', 'p3', 'p4')
+
+cross.3 <- '
+m2 ~ m1 + b1*p1
+m3 ~ m2 + b2*p2 + m1
+m4 ~ m3 + b3*p3 + m2
+
+p2 ~ p1 + b4*m1
+p3 ~ p2 + b5*m2 + p1
+p4 ~ p3 + b6*m3 + p2
+
+m1 ~~ p1
+m2 ~~ p2
+m3 ~~ p3
+m4 ~~ p4
+
+bb14 := b1-b4
+bb25 := b2-b5
+bb36 := b3-b6'
+
+cross.3.fit <- lavaan(cross.3, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
+summary(cross.3.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
+lavaanPlot::lavaanPlot(name = "title", cross.3.fit, labels = labels2, coefs = TRUE, sig = 0.05)
+
+
+```
