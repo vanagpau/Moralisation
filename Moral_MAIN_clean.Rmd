@@ -588,10 +588,13 @@ cor.mtest <- function(mat, ...) {
 
 # matrix of the p-value of the correlation with matched column and row names for all variables recorded at all 4 time-points
 p.mat <- cor.mtest(df %>% select(var_names4))
+
+# Add descriptive column and row names for thesis figures
 colnames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
 rownames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
 head(p.mat[, 1:5])
 
+# Run the correlation plot
 corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
 
 # There are different ways to model the data - using change scores or using time 4 variables as predictors
@@ -599,67 +602,9 @@ corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(
 # Create dataframe for modelling
 wide_df <- df %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(pig, emo, moral, cog, hed, diss, att, emo_obj, cog_delta, emo_delta, pig_delta, moral_delta, diss_delta, hed_delta, emo_obj_delta, att_delta))
 
-# SET 1: Use all variables - IGNORE
-
-# # Modelling effect of time = session has significant effect (p < 0.005), but small (coeff = 0.18)
-# m2 <- lm(moral ~ session, df)
-# summary(m2)
-# performance::check_model(m2)
-# AIC(m2)
-# 
-# # effect of session disappears when a key variable (emo) is added
-# 
-# m3 <- lm(moral ~ session + emo, df)
-# summary(m3)
-# performance::check_model(m3)
-# AIC(m3)
-# 
-# m4 <- lm(moral ~ session + emo + pig, df)
-# summary(m4)
-# performance::check_model(m4)
-# AIC(m4)
-# 
-# tab_model(m2, m3, m4, file = "tab1.html")
-# 
-# # Adding other variables one by one to see impact on model fit
-# 
-# # Base model
-# m5 <- lm(moral ~ emo + pig, df)
-# summary(m5)
-# performance::check_model(m5)
-# AIC(m5)
-# 
-# # Moral cognitions is significant by this measure and absorbs some Moral Emotions variance.
-# m6 <- lm(moral ~ emo + pig + cog, df)
-# summary(m6)
-# performance::check_model(m6)
-# AIC(m6)
-# 
-# # Dissonance Reduction - non-significant
-# m7 <- lm(moral ~ emo + pig + cog + diss, df)
-# summary(m7)
-# performance::check_model(m7)
-# AIC(m7)
-# 
-# # Hedonic Motivation
-# m8 <- lm(moral ~ emo + pig + cog + hed, df)
-# summary(m8)
-# performance::check_model(m8)
-# AIC(m8)
-# 
-# # People Emotions non-significant
-# m9 <- lm(moral ~ emo + pig + cog + emo_obj, df)
-# summary(m9)
-# performance::check_model(m9)
-# AIC(m9)
-# 
-# tab_model(m5, m6, m7, m8, file = "tab2.html")
-# 
-# # Run model with cog + pig only
-# m10 <- lm(moral ~ emo + cog, df)
-# summary(m10)
-# performance::check_model(m10)
-# AIC(m10)
+# Show dataframe
+wide_df
+str(wide_df)
 
 # SET 1. using CHANGE-CHANGE SCORES - 
 
@@ -699,11 +644,8 @@ summary(m1.7)
 performance::check_model(m1.7)
 AIC(m1.7)
 
+# create APA table for inclusion in thesis
 tab_model(m1.2, m1.3, m1.6, file = "tab_delta1.html")
-
-
-
-
 
 
 # SET 2. using CHANGE-MORAL1 v MORAL4 SCORES
@@ -751,113 +693,47 @@ summary(m1.7)
 performance::check_model(m1.7)
 AIC(m1.7)
 
+# create APA table for inclusion in thesis
 tab_model(m1.1, m1.2, m1.3, m1.6, file = "tab_delta2.html")
+```
 
-# METHOD 3: using final timepoints - IGNORE THIS
+## Exploratory Analysis - exploring influence of MIS and HPRS
+```{r}
 
-# #Base model
-# m2.1 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4, data = wide_df)
-# summary(m2.1)
-# performance::check_model(m2.1)
-# AIC(m2.1)
-# 
-# # Dissonance Reduction not significant
-# m2.2 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + diss_4, data = wide_df)
-# summary(m2.2)
-# performance::check_model(m2.2)
-# AIC(m2.2)
-# 
-# # Moral cognition still not significant
-# m2.3 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + cog_4, data = wide_df)
-# summary(m2.3)
-# performance::check_model(m2.3)
-# AIC(m2.3)
-# 
-# tab_model(m2.1, m2.3, file = "tab_set3.html")
-# 
-# # Attitude not significant
-# m2.4 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + att_4, data = wide_df)
-# summary(m2.4)
-# performance::check_model(m2.4)
-# AIC(m2.4)
-# 
-# # Hedonic motivation not significant
-# m2.5 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + hed_4, data = wide_df)
-# summary(m2.5)
-# performance::check_model(m2.5)
-# AIC(m2.5)
-# 
-# # People Emotions not significant
-# m2.6 <- lm(moral_4 ~ moral_1 + pig_4 + emo_4 + emo_obj_4, data = wide_df)
-# summary(m2.6)
-# performance::check_model(m2.6)
-# AIC(m2.6)
+# 1. Moral Identity Scale (MIS)
 
-
-
-# REPEATED MEASURES ANOVA
-# Test assumptions; 1. Outliers - some outliers but none of them extreme (Values above Q3 + 3xIQR or below Q1 - 3xIQR are considered as extreme)
-
-for (i in 1:4){
-  for (j in 1:length(var_names4)) {
-print(identify_outliers(df %>% filter(session == i) %>% select(var_names4[j])))
-  }
-}
-
-# 2. Normality - moralisation is non-normal at times points 3 and 4 (see Assumptions section above)
-
-# 3. Mauchly's test of sphericity is conducted when anova_test used
-
-df %>% group_by(session) %>% get_summary_stats(moral, type = "mean_sd")
-ggboxplot(df, x = "session", y = c("moral"), add = "jitter")
-
-# Repeated measures ANOVA shows significant, but small effect of time (GES = generalised effect size https://www.psy.gla.ac.uk/~steve/best/effect.html)
-rep.a1 <- anova_test(data = df, dv = moral, wid = PID, within = session)
-get_anova_table(rep.a1)
-
-# Multiple pair-wise t-tests show that moralisation significant from session 1 to 3 and 1 to 4
-df %>%  pairwise_t_test(moral ~ session, paired = TRUE,p.adjust.method = "bonferroni")
-
-
-
-
-
-
-# test traits - Moral self-identity: full-scale
+# test traits - Moral self-identity: full-scale with Moralisation
 cor.test(pull(df %>% filter(session == 1) %>% select(MIS)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
-# test traits - Moral self-identity: Internalisation scale
+# test traits - Moral self-identity: Internalisation scale with Moralisation
 cor.test(pull(df %>% filter(session == 1) %>% select(MIS_I)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
-# test traits - Moral self-identity: Symbolisation scale
+# test traits - Moral self-identity: Symbolisation scale with Moralisation
 cor.test(pull(df %>% filter(session == 1) %>% select(MIS_S)), pull(df %>% filter(session == 1) %>% select(moral_delta)))
 
-# test traits - HPRS: Psychological reactance
+# 2. HPRS: Psychological reactance
 
 # Show which variables are correlated with HPRS - key change variables (deltas)
 c1 <- df %>% filter(session == 1) %>% select(HPRS, cog_delta, behav_delta, moral_delta, emo_delta, pig_delta) %>% cor()
-# colnames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
-# rownames(c1) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
 
 # matrix of the p-value of the correlation with matched column and row names
 p.mat <- corrplot::cor.mtest(df %>% filter(session == 1) %>% select(HPRS, cog_delta, behav_delta, moral_delta, emo_delta, pig_delta))
-# colnames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
-# rownames(p.mat) <- c("Moral Cognitions", "Attitude", "Moral Piggybacking", "Hedonic Motivation", "Moralisation", "Dissonance Reduction", "Moral Emotions", "People Emotions")
+
 head(p.mat$p[, 1:5])
 
 # Correlation matrix shows no significant results for HPRS versus key change measures
 corrplot::corrplot(c1, method = "circle", order = "FPC", col = colorRampPalette(c("red", "white", "blue"))(20), p.mat = p.mat$p, sig.level = 0.05, addCoef.col = "black", tl.col="black", tl.srt=45, tl.cex = .75, insig = "blank", number.font = 1, diag = FALSE)
 
-# No relationship with change in Cognitive Dissonance 
+# No sig. relationship with change in Cognitive Dissonance 
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss) - df %>% filter(session == 1) %>% select(diss)))
 
+# No sig. relationship of HPRS and Dissonance Reduction at any individual time-point
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 1) %>% select(diss)))
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 2) %>% select(diss)))
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 3) %>% select(diss)))
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(diss)))
 
-
-# No relationship with change in Hedonic Motivation
+# And no relationship with change in Hedonic Motivation
 cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(session == 4) %>% select(hed) - df %>% filter(session == 1) %>% select(hed)))
 
 
@@ -869,13 +745,12 @@ cor.test(pull(df %>% filter(session == 1) %>% select(HPRS)), pull(df %>% filter(
 
 # MIXED MODELS
 
-# NOTE: to do the mixed models accurately for session should time be converted to a continuous variable??
-
 # Null model
 mm1 <- lmer(moral ~ session|PID, data = df)
 summary(mm1)
 performance::check_model(mm1)
 plot_model(mm1, type = "re", show.intercept = FALSE)
+AIC(mm1)
 
 # Create linear model with independent predictors
 mm2 <- lmer(moral ~ emo + pig + cog + (session|PID), data = df)
@@ -884,23 +759,22 @@ plot(mm2)
 performance::check_model(mm2)
 plot_model(mm2, type = "re", show.intercept = FALSE)
 plot_model(mm2, type = "std", show.values = TRUE)
-
-anova(mm1, mm2)
+AIC(mm2)
 
 mm3 <- lmer(moral ~ emo + pig + cog + diss + (session|PID), data = df)
 summary(mm3)
-plot(mm3)
-anova(mm2, mm3)
+performance::check_model(mm3)
+AIC(mm3)
 
 mm4 <- lmer(moral ~ emo + pig + cog + hed + (session|PID), data = df)
 summary(mm4)
 performance::check_model(mm4)
-anova(mm4, mm2)
+AIC(mm4)
 
 mm5 <- lmer(moral ~ emo + pig + cog + att + (session|PID), data = df)
 summary(mm5)
 performance::check_model(mm5)
-anova(mm5, mm2)
+AIC(mm5)
 
 tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
 
