@@ -22,7 +22,7 @@ library(pwr)
 library(tidyverse)
 
 #Set working directory
-setwd("E:/R stuff/Moralisation") #for home PC
+setwd("C:/Users/paulv/Documents/R/Moralisation") 
 #setwd("/home/vanagpau/R/Moralisation") #for laptop
 
 ```
@@ -30,7 +30,7 @@ setwd("E:/R stuff/Moralisation") #for home PC
 ## Data import and wrangling
 ```{r, warning=FALSE, message = FALSE}
 
-setwd("C:/Users/Ben 10/Documents/Paul COG NEURO MSc/Empirical project/Pilot actual DATA")
+setwd("C:/Users/paulv/Documents/Paul COG NEURO MSc/Empirical project/Pilot actual DATA")
 
 # Read in data frame 1
 df1 <- read_csv("data_exp_44331-v24_questionnaire-j12y.csv")
