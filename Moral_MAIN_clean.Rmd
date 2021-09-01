@@ -803,17 +803,17 @@ names(df)[names(df) == 'hed'] <- 'Hed Mtvn'
 names(df)[names(df) == 'emo_obj'] <- 'People Emtns'
 names(df)[names(df) == 'cog'] <- 'Cognitions'
 
-# IV = hed; mod = emo + pig
+# IV = hed; mod = emo + pig + cog
 med1 <- psych::mediate('Moralisation', 'Hed Mtvn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
 med1
 mediate.diagram(med1, main = "c = Direct Effect; c' = Indirect Effect", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
-# IV = hed; mod = emo + pig
+# IV = hed; mod = emo + pig + cog
 med2 <- psych::mediate('Moralisation', 'Attitude', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
 med2
 mediate.diagram(med2, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
 
-# IV = diss; mod = emo + pig
+# IV = diss; mod = emo + pig + cog
 med3 <- psych::mediate('Moralisation', 'Diss Redn', m = c('Moral Emtns', 'Piggybacking', 'Cognitions'), data = df)
 med3
 mediate.diagram(med3, main = "", xlim = c(0,10), ylim = c(2,9), l.cex = .7)
