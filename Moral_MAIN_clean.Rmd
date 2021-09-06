@@ -410,7 +410,7 @@ str(df)
 ## Assumption checks
 ```{r}
 
-# Normality: Shapiro-Wilk test per variable mean per session and plot histograms of each distribution for variables collected at all 4 time points (var_names4)
+# Normality: Run Shapiro-Wilk test per variable mean per session and plot histograms of any distribution which is non-normal across all variables collected at all 4 time points (var_names4)
 
 for (i in 1:4) {# for each session
 for (j in 1:length(var_names4)) { # for each variable
@@ -761,25 +761,24 @@ AIC(mm1)
 # Create linear model with independent predictors
 mm2 <- lmer(moral ~ emo + pig + cog + (session|PID), data = df)
 summary(mm2)
-plot(mm2)
-performance::check_model(mm2)
+performance::check_model(mm2, panel = FALSE)
 plot_model(mm2, type = "re", show.intercept = FALSE)
 plot_model(mm2, type = "std", show.values = TRUE)
 AIC(mm2)
 
 mm3 <- lmer(moral ~ emo + pig + cog + diss + (session|PID), data = df)
 summary(mm3)
-performance::check_model(mm3)
+performance::check_model(mm3, panel = FALSE)
 AIC(mm3)
 
 mm4 <- lmer(moral ~ emo + pig + cog + hed + (session|PID), data = df)
 summary(mm4)
-performance::check_model(mm4)
+performance::check_model(mm4, panel = FALSE)
 AIC(mm4)
 
 mm5 <- lmer(moral ~ emo + pig + cog + att + (session|PID), data = df)
 summary(mm5)
-performance::check_model(mm5)
+performance::check_model(mm5, panel = FALSE)
 AIC(mm5)
 
 tab_model(mm1, mm2, mm3, mm4, mm5, file = "tab3.html")
