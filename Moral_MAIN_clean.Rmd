@@ -1022,7 +1022,9 @@ summary(cross.1.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
 labels1 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
               e1 = "Moral Emotions 1", e2 = "Moral Emotions 2", e3 = "Moral Emotions 3", e4 = "Moral Emotions 4")
 
-lavaanPlot::lavaanPlot(name = "title", cross.1.fit, labels = labels1, coefs = TRUE, sig = 0.05)
+lag1 <- lavaanPlot::lavaanPlot(name = "title", cross.1.fit, labels = labels1, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"))
+lag1
+htmltools::save_html(lag1, file = "lag1.html")
 
 
 # 2. MORALISATION and MORAL PIGGYBACKING
@@ -1058,8 +1060,9 @@ bb36 := b3-b6'
 
 cross.2.fit <- lavaan(cross.2, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
 summary(cross.2.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
-lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2, coefs = TRUE, sig = 0.05)
-
+lag2 <- lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"))
+lag2
+htmltools::save_html(lag2, file = "lag2.html")
 
 
 
@@ -1097,7 +1100,8 @@ bb36 := b3-b6'
 
 cross.3.fit <- lavaan(cross.3, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
 summary(cross.3.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
-lavaanPlot::lavaanPlot(name = "title", cross.3.fit, labels = labels2, coefs = TRUE, sig = 0.05)
-
+lag3 <- lavaanPlot::lavaanPlot(name = "title", cross.3.fit, labels = labels2, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"))
+lag3
+htmltools::save_html(lag3, file = "lag3.html")
 
 ```
