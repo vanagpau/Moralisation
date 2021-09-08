@@ -1022,7 +1022,7 @@ summary(cross.1.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
 labels1 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
               e1 = "Moral Emotions 1", e2 = "Moral Emotions 2", e3 = "Moral Emotions 3", e4 = "Moral Emotions 4")
 
-lag1 <- lavaanPlot::lavaanPlot(name = "title", cross.1.fit, labels = labels1, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"))
+lag1 <- lavaanPlot::lavaanPlot(name = "title", cross.1.fit, labels = labels1, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"), graph_options = list(ratio = 0.5))
 lag1
 htmltools::save_html(lag1, file = "lag1.html")
 
@@ -1060,7 +1060,7 @@ bb36 := b3-b6'
 
 cross.2.fit <- lavaan(cross.2, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
 summary(cross.2.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
-lag2 <- lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"))
+lag2 <- lavaanPlot::lavaanPlot(name = "title", cross.2.fit, labels = labels2 ,coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"), graph_options = list(ratio = 0.75))
 lag2
 htmltools::save_html(lag2, file = "lag2.html")
 
@@ -1076,7 +1076,7 @@ df %>% select(PID, moral, session, cog) %>% pivot_wider(id_cols = PID, names_fro
 
 ## extract data to work with -- m = moralization, p = moral cognitions ##
 working.data <- df %>% select(PID, moral, session, cog) %>% pivot_wider(id_cols = PID, names_from = session, values_from = c(moral, cog)) %>% select(-PID)
-labels2 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
+labels3 = list(m1 = "Moralisation 1", m2 = "Moralisation 2", m3 = "Moralisation 3", m4 = "Moralisation 4",
               p1 = "Moral Cognitions 1", p2 = "Moral Cognitions 2", p3 = "Moral Cognitions 3", p4 = "Moral Cognitions 4")
 names(working.data) <- c('m1', 'm2', 'm3', 'm4', 'p1', 'p2', 'p3', 'p4')
 
@@ -1100,8 +1100,10 @@ bb36 := b3-b6'
 
 cross.3.fit <- lavaan(cross.3, data = working.data, auto.var = TRUE, fixed.x=FALSE) ## run model
 summary(cross.3.fit, standardized = TRUE, fit.measures = TRUE) ## examine model
-lag3 <- lavaanPlot::lavaanPlot(name = "title", cross.3.fit, labels = labels2, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"))
+lag3 <- lavaanPlot::lavaanPlot(name = "title", cross.3.fit, labels = labels3, coefs = TRUE, sig = 0.05, stars = c("regress"), edge_options = list(color = "grey"), graph_options = list(ratio = 0.75))
 lag3
 htmltools::save_html(lag3, file = "lag3.html")
+
+
 
 ```
